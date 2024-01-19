@@ -29,9 +29,9 @@ let stagger = 7;
 let start = Date.now();
 */
 const backdrop = new Image();
-backdrop.src = './Website In-Progress.png';
-const backdropW = 240;
-const backdropH = 116;
+backdrop.src = './MountainsBase.png';
+const backdropW = 518;
+const backdropH = 518;
 
 function run() {
     let done = false;
@@ -41,12 +41,14 @@ function run() {
 
 
 function draw() {
-    let scalar = 2;
+    let scalar = 4;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#90956c";
     ctx.fillRect(0,0,canvas.width,canvas.height);
     //background
-    ctx.drawImage(backdrop,100,100,backdropW*scalar,backdropH*scalar);
+    const backdropOriginX = (canvas.width/2) - (scalar*backdropW/2);
+    const backdropOriginY = (canvas.height/2) - (scalar*backdropH/2);
+    ctx.drawImage(backdrop,backdropOriginX,backdropOriginY,backdropW*scalar,backdropH*scalar);
     requestAnimationFrame(draw);
 }
 
