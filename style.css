@@ -4,9 +4,16 @@ body {
 }
 
 canvas {
+  scale: 3;
   image-rendering: -moz-crisp-edges;
   image-rendering: -webkit-crisp-edges;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+}
+
+@media (max-width: 600px) {
+  canvas {  
+    scale: 1.5;
+  }
 }
 
