@@ -1,5 +1,6 @@
 //import Road from './road.js'
 //import Renderer from './renderer.js'
+
 const MAX_FRAMES = 1000
 
 
@@ -9,26 +10,35 @@ let canvasStyle = window.getComputedStyle(canvas);
 let scale = canvasStyle.scale;
 const mobile = (canvasStyle.scale === "1")
 // Do some basic setup
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
 const ctx = canvas.getContext('2d');
 ctx.webkitImageSmoothingEnabled = false;
 ctx.mozImageSmoothingEnabled = false;
 ctx.imageSmoothingEnabled = false;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+let centerX = ((canvas.width/2));
+let centerY = ((canvas.height/2));
 
-class Sprite {
+class Drawable {
 
     constructor(path, x, y, frames=1, skins=1, spriteSheet) {
+        this.frameCount = frames;
+        this.skinCount = skins;
+        this.x = x;
+        this.y = y;
         if (spriteSheet != null) {
             this.spriteSheet = spriteSheet;
         } else {
-            this.spriteSheet = createImageFromPath(path);
+            this.spriteSheet = new Image();
+            this.spriteSheet.onload = () => this.recalculateSize();
+            this.spriteSheet.src = path;
         }
-        this.height = this.spriteSheet.height / skins;
-        this.width = this.spriteSheet.width / frames;
-        this.x = x;
-        this.y = y;
-        this.frameCount = frames;
+    }
+
+    recalculateSize() {    
+        this.height = this.spriteSheet.height / this.skinCount;
+        this.width = this.spriteSheet.width / this.frameCount;
+        console.log(this.height);
         // Error to sanity check frame height declaration
         if (!Number.isInteger(this.width)) {
             throw new Error("The spriteSheet could not be divided evenly by the number of frames.");
@@ -64,29 +74,12 @@ class Sprite {
 
 }
 
-let seconds = 0;
-let oldTimeStamp = 0;
-let frameSpeed = 0;
-let timeStamp = 0;
-
-const x = window.getScreenDetails;
-
 // Image Declarations
 function createImageFromPath(path) {
     const image = new Image();
     image.src = path;
     return image;
 }
-const mountains = createImageFromPath('./mountains3.png');
-const pines = createImageFromPath('./pines3.png');
-const stamps = createImageFromPath('./stamps3.png');
-const postcard = createImageFromPath('./postcard3.png');
-// SCROLL INDICATOR
-const SCROLL_PATH = "./scrollDown3.png"
-const SCROLL_FRAMES = 23;
-const scrollIndicator = new Sprite(SCROLL_PATH,null,null,SCROLL_FRAMES)
-
-console.log(scale);
 
 function run() {
     let done = false;
@@ -128,6 +121,28 @@ addEventListener("wheel", (event) => {
     }
 });
 
+const mountains = createImageFromPath('./mountains3.png');
+const pines = createImageFromPath('./pines3.png');
+// SCROLL INDICATOR
+const SCROLL_PATH = "./scrollDown3.png";
+const SCROLL_FRAMES = 23;
+const scrollIndicator = new Drawable(SCROLL_PATH,null,null,SCROLL_FRAMES);
+// POST CARD
+let cardX = centerX - ((scrollPos-800)*(scrollPos-800)/625) ;
+let cardY = centerY;
+const POSTCARD_PATH = "./postcard3.png";
+const postcard = new Drawable(POSTCARD_PATH,null,null);
+// STAMPS
+const STAMPS_PATH = "./stamps3.png";
+const STAMPS_FRAMES = 2;
+const STAMPS_SKINS = 3;
+const stamps = new Drawable(STAMPS_PATH,null,null,STAMPS_FRAMES,STAMPS_SKINS,);
+// List of all sprites
+const sprites = [stamps, scrollIndicator, postcard]
+for (const sprite of sprites) {
+    sprite.recalculateSize();
+}
+
 function draw() {
     // Time logging
     tick++;
@@ -144,12 +159,20 @@ function draw() {
     centerX = ((canvas.width/2));
     centerY = ((canvas.height/2));
     maxDrawHeight = (canvas.height * ((1+scale)/(2*scale)));
+    // Sprite Updating
+    // Scroll
     scrollIndicator.setCenter(centerX,maxDrawHeight - 40)
-    
-    // Scroll updating
-    if ((scrollPos != 0)) {
-            scrollPos = scrollPos / 1.1
-    }
+    if ((scrollPos >= 4) && (scrollPos < 300)) {
+        scrollPos = scrollPos - 3;
+    } else if (((scrollPos >= 300) && (scrollPos < 790)) || (scrollPos < 0)) {
+        scrollPos = scrollPos + 3;
+    } 
+
+    cardX = centerX - ((scrollPos-800)*(scrollPos-800)/625) ;
+    cardY = centerY;
+    console.log(cardX + " " + cardY)
+    // Postcard
+    postcard.setCenter(cardX, cardY);
 
 
     // Drawing
@@ -160,14 +183,25 @@ function draw() {
     
     // 2.) background
     drawImageCenter(ctx,centerX,centerY - scrollPos,mountains,imgScale)
-    drawImageCenter(ctx,centerX,centerY + scrollPos,pines,imgScale)
 
     // 3.) sprites
-    //if ((frame > 100) && (scrollPos == 0)) {
+    postcard.drawSprite(ctx,0)
+    // Stamps
+    stamps.setCenter(cardX + 280, cardY - 140);
+    stamps.drawSprite(ctx,0,1)
+    // Stamps
+    stamps.setCenter(cardX + 240, cardY - 200);
+    stamps.drawSprite(ctx,0,0)
+    // Stamps
+    stamps.setCenter(cardX + 200, cardY - 100);
+    stamps.drawSprite(ctx,0,2)
+    drawImageCenter(ctx,centerX,centerY + (scrollPos*scrollPos/500),pines,imgScale)
+    // Scroll
+    if ((frame > 100) && (scrollPos == 0)) {
 
-    //    ctx.globalAlpha = Math.tanh((frame-100)/100)
-    //    scrollIndicator.drawSprite(ctx, frame);
-    //}
+        ctx.globalAlpha = Math.tanh((frame-100)/100)
+        scrollIndicator.drawSprite(ctx, frame);
+    }
 
     // Loop
     requestAnimationFrame(draw);
