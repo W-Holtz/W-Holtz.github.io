@@ -3,12 +3,20 @@ const MAX_FRAMES = 1000
 // MOUNTAINS
 const MOUNTAINS_PATH = './mountains3.png';
 // PINES
-const PINES_PATH = './pines3.png';
+const PINES_PATH = './LongPines.png'; // add 500 to base for long pines
 // SCROLL INDICATOR
 const SCROLL_PATH = "./scrollDown3.png";
 const SCROLL_FRAMES = 23;
+// LABELS
+const ABOUT_PATH = './AboutMenuLabel.png';
+const PLAY_PATH = './PlayMenuLabel.png'
+const LABELS_PATH = './MenuLabels.png'
 // POST CARD
-const POSTCARD_PATH = "./postcard3.png";
+const POSTCARD_PATH = "./Postcards/October11.png";
+const POSTCARD_PATH_PREFIX = "./Postcards/";
+// POST STACK
+const POSTCARD_OVERLAP_OFFSET = 15;
+const POSTCARD_CARD_COUNT = 2;
 // STAMPS                                       TODO: Add stamp enum
 const STAMPS_PATH = "./stamps3.png";
 const STAMPS_FRAMES = 2;
@@ -38,6 +46,7 @@ canvas.height = window.innerHeight;
 let frame = 0;
 let tick = 0;
 const stagger = 3;
+let done = false;
 
 // Image and Canvas Context Setup
 const imgScale = mobile ? 0.5 : 1; // scaling for mobile
@@ -45,15 +54,18 @@ let maxDrawHeight = (canvas.height * ((1+scale)/(2*scale)));
 let maxDrawWidth = (canvas.width * ((1+scale)/(2*scale)));
 let minDrawHeight = canvas.height - maxDrawHeight;
 let minDrawWidth = canvas.width - maxDrawWidth;
-//console.log(canvas.height,"HEIOGHT",maxDrawHeight,"MAX",scale,"SCALE")
 let centerX = ((canvas.width/2));
 let centerY = ((canvas.height/2));
 
 // Scrolling Setup
 let targetScrollPosition = 0;
 let currScrollPosition = targetScrollPosition;
+let backgroundHoverOffset = 0;
 let scrollMomentum = 0; 
+let isTransitioning=false;
+let transitioningTo=null;
 addEventListener("wheel", (event) => {
+    if (isTransitioning) { return; } // ignore scrolling if we are doing a click/tab based transistion
     targetScrollPosition += 0.001 * event.deltaY;
     if (targetScrollPosition >= 1.1) {
         targetScrollPosition = 1.1;
@@ -63,9 +75,29 @@ addEventListener("wheel", (event) => {
 });
 
 function updateScroll() { // For an efficiency gain, convert this to a polynomial
-    targetScrollPosition += -0.01 * Math.sin((targetScrollPosition) * 2 * Math.PI ); // <- Derivative of the cos() that give us a good change in position
-    currScrollPosition += 0.1 * (targetScrollPosition - currScrollPosition);
-    //console.log("targ: ",targetScrollPosition,"curr: ",currScrollPosition)
+    if (isTransitioning) {
+        switch(transitioningTo) {
+            case 0:
+                currScrollPosition -= 0.02 * Math.sin((currScrollPosition - 0.30) * 2 * Math.PI ) + 0.02;
+                if (currScrollPosition < .2) {
+                    targetScrollPosition = .1;
+                    isTransitioning = false;
+                    transitioningTo=null;
+                }
+                break;
+            case 1:
+                currScrollPosition += 0.02 * Math.sin((currScrollPosition - 0.20) * 2 * Math.PI ) + 0.02;
+                if (currScrollPosition > .80) {
+                    targetScrollPosition = .9;
+                    isTransitioning = false;
+                    transitioningTo=null;
+                }
+                break;
+        }
+    } else {
+        targetScrollPosition += -0.01 * Math.sin((targetScrollPosition) * 2 * Math.PI ); // <- Derivative of the cos() that give us a good change in position
+        currScrollPosition += 0.1 * (targetScrollPosition - currScrollPosition);
+    }
 }
 
 // Mouse Position Setup
@@ -74,6 +106,7 @@ let canvasMouseY = 0;
 function mouseMovementHandler(event) {
     [canvasMouseX,canvasMouseY] = webpageCoordToCanvasCoord(event.x,event.y)
 }
+
 document.addEventListener('mousemove', mouseMovementHandler);
 
 // I'm updating scrolling with the following goals in mind:
@@ -134,8 +167,8 @@ class Sprite {
     }
 
     setCenter(x, y) {
-        this.x = Math.floor(x-this.width/(2))
-        this.y = Math.floor(y-this.height/(2))
+        this.x = x-this.width/(2)
+        this.y = y-this.height/(2)
     }
 
     setOrigin(x, y) {
@@ -151,8 +184,8 @@ class Sprite {
             this.height*(this.curr_skin),
             this.width,
             this.height,
-            this.x,
-            this.y,
+            Math.floor(this.x),
+            Math.floor(this.y),
             this.width*scale,
             this.height*scale
         );
@@ -177,45 +210,64 @@ class ScaledImage extends Sprite {
 
 class Stamp extends Sprite {
 
-    constructor(spriteSheet, path, frames=1, skins=1, curr_skin=0, angle, postcardXOffset=682, postcardYOffset=110) {
+    constructor(spriteSheet, path, frames=1, skins=1, curr_skin=0, angle, postcardXOffset=682, postcardYOffset=110,isEnabled=false) {
         super(spriteSheet, path, frames, skins, curr_skin);
         this.angle = angle;
+        this.isEnabled=isEnabled;
+        this.eventListeners=[];
         this.postcardXOffset=postcardXOffset;
         this.postcardYOffset=postcardYOffset;
-        
-        addEventListener("mousemove", (event) => {
-            // We want to confirm that the converted X and Y click difference is not outside the width (x and y here are center)
-            if (-this.width/2 < (-this.x + canvasMouseX) && (-this.x + canvasMouseX) < this.width/2 && 
-                -this.height/2 < (-this.y + canvasMouseY) && (-this.y + canvasMouseY) < this.height/2 ) 
-            {
-                this.curr_frame=1;
-            } else {
-                this.curr_frame=0;
-            }
-        });
+        this.initializeEventListeners()
+    }
 
+    // Initializes the event listeners for the stamp:
+    //   - listen for mouse move
+    //   - listen for mouse down
+    initializeEventListeners() {
+        console.log("initial")
         let handleMouseUp = (event) => {
             if (this.curr_frame===1) {
                 switch(this.curr_skin) {
                     case 0:
                         window.location.href = "https://open.spotify.com/user/williamholtz?fo=1&a="; 
+                        done=true;
                         break;
                     case 1:
                         window.location.href = "https://www.linkedin.com/in/william-holtz-ab8981123"; 
+                        done=true;
                         break;
                     case 2:
                         window.location.href = "https://github.com/W-Holtz"; 
+                        done=true;
                         break;
                     default:
                 }
             }
         };
 
-        addEventListener("mousedown", (event) => {
-            if (this.curr_frame===1) {
-                addEventListener("mouseup", handleMouseUp, {once : true})
-            }
-        });
+        this.eventListeners.unshift(["mousedown",(event) => {
+            if (this.curr_frame===1 && this.isEnabled) { addEventListener("mouseup", handleMouseUp, {once : true}) } 
+        }]);
+
+        addEventListener(this.eventListeners[0][0], this.eventListeners[0][1]);
+    }
+
+    unload() {
+        this.spriteSheet=null;
+        for (const listener of this.eventListeners) {
+            removeEventListener(listener[0], listener[1])
+        }
+    }
+
+    update() {
+        // We want to confirm that the converted X and Y click difference is not outside the width (x and y here are center)
+        if (this.isEnabled && (-this.width/2 < (-this.x + canvasMouseX) && (-this.x + canvasMouseX) < this.width/2 && 
+            -this.height/2 < (-this.y + canvasMouseY) && (-this.y + canvasMouseY) < this.height/2 )) 
+        {
+            this.curr_frame=1;
+        } else {
+           this.curr_frame=0;
+        }
     }
 
     // Steps for a successful angled drawing:
@@ -228,7 +280,7 @@ class Stamp extends Sprite {
     // 3. Draw
     // 4. Undo in order
     draw(ctx) {
-        ctx.translate(this.x,this.y);
+        ctx.translate(Math.floor(this.x),Math.floor(this.y));
         ctx.rotate(this.angle);
         ctx.drawImage(
             this.spriteSheet,
@@ -236,13 +288,13 @@ class Stamp extends Sprite {
             this.height*(this.curr_skin),
             this.width,
             this.height,
-            -this.width/2,
-            -this.height/2,
+            Math.floor(-this.width/2),
+            Math.floor(-this.height/2),
             this.width,
             this.height
         );
         ctx.rotate(-this.angle);
-        ctx.translate(-this.x,-this.y);
+        ctx.translate(-Math.floor(this.x),-Math.floor(this.y));
     }
 }
 
@@ -250,19 +302,44 @@ class Postcard extends Sprite {
     
     constructor(path) {
         super(null,path);
+        this.isEnabled=false;
         // Stamps
+        this.stamps=[];
         this.stampsImg = createImageFromPath(STAMPS_PATH);
         this.stampsImg.onload = () => { 
-            this.addStamps(); 
+            this.addStamps();
         };
-        this.stamps = [];
+        this.path=path;
+        this.status = 0; // TODO : Add an enum - 0 is stable, 1 is flying out, 2 in flying in, -1 is fading into the ether
+    }
+
+    unload() {
+        for (const stamp of this.stamps) {
+            stamp.unload();
+            this.stamps=[];
+        }
+        this.stampsImg=null;
     }
 
     addStamps() {
-        this.spotify = new Stamp(this.stampsImg,null,2,3,0,Math.random()-0.75,580,100);
-        this.git = new Stamp(this.stampsImg,null,2,3,1,Math.random()-0.75,688,108);
-        this.linkedin = new Stamp(this.stampsImg,null,2,3,2,Math.random()-0.75,600,200);
+        this.spotify = new Stamp(this.stampsImg,null,2,3,0,Math.random()-0.75,580,100,this.isEnabled);
+        this.git = new Stamp(this.stampsImg,null,2,3,1,Math.random()-0.75,688,108,this.isEnabled);
+        this.linkedin = new Stamp(this.stampsImg,null,2,3,2,Math.random()-0.75,600,200,this.isEnabled);
         this.stamps = [this.spotify,this.linkedin,this.git];
+    }
+
+    enable() {
+        this.isEnabled=true;
+        for (const stamp of this.stamps) {
+            stamp.isEnabled=true;
+        } 
+    }
+
+    disable() {
+        this.isEnabled=false;
+        for (const stamp of this.stamps) {
+            stamp.isEnabled=false;
+        } 
     }
 
     draw(ctx) { 
@@ -271,26 +348,261 @@ class Postcard extends Sprite {
             stamp.draw(ctx);
         }
     }
-    
-    update() { // for an efficiency gain, consider removing the trig func infavor of a polynomial
-        let sendOffScreenMultiplier = - Math.tanh(10 * currScrollPosition - .2 ) + 1
-        this.setCenter(centerX - (800 * (1 - currScrollPosition)) - (3000 * sendOffScreenMultiplier),centerY); 
-        for (const stamp of this.stamps) {
-            stamp.setCenter(this.x + stamp.postcardXOffset, this.y + stamp.postcardYOffset)
-        }
 
-
-        // TODO : Get move the event listener for the stamp to a global variable. 
-        // // Update frame (hover)
-        // // We want to confirm that the converted X and Y click difference is not outside the width (x and y here are center)
-        // if (-this.width/2 < (-this.x + convX) && (-this.x + convX) < this.width/2 && 
-        //     -this.height/2 < (-this.y + convY) && (-this.y + convY) < this.height/2 ) {
-        //     this.curr_frame=1; 
-        // } else {
-        //     this.curr_frame=0;
-        // }
+    update() {
+        this.updateStamps()
     }
 
+    updateStamps() {
+        for (const stamp of this.stamps) {
+            stamp.setCenter(this.x + stamp.postcardXOffset, this.y + stamp.postcardYOffset)
+            stamp.update();
+        }
+    }
+}
+
+class CardStack extends Sprite{
+
+    constructor(folderPath) { // TODO : Add loading and unloading code to manage the number of sprites being drawn
+        super(null, folderPath+"October11.png")
+
+        this.postcards = [];
+        this.imageList = [];
+        this.depthOffsets = [];
+        this.topCardHoverOffset = 0;
+
+        this.imageList = [folderPath+"AboutMe.png",folderPath+"October11.png", folderPath+"AboutMe.png",folderPath+"October11.png"];
+        for (var index=0; index<POSTCARD_CARD_COUNT; index++) {
+            this.loadNextPostcard(true)
+        }
+        this.postcards[0].enable()
+        
+
+        this.initializeEventListeners();
+    }
+
+    loadNextPostcard(reverse=false) {
+        if (reverse) {
+            let path = this.imageList.pop();
+            this.postcards.unshift(new Postcard(path));
+            this.depthOffsets.unshift(-POSTCARD_OVERLAP_OFFSET);
+            this.imageList.unshift(path);
+        } else {
+            let path = this.imageList[POSTCARD_CARD_COUNT];
+            this.postcards.push(new Postcard(path));
+            this.depthOffsets.push(2 * POSTCARD_OVERLAP_OFFSET);
+            this.imageList.push(this.imageList.shift());
+        }
+    }
+
+    unloadPostcard(reverse=false) {
+        if (reverse) {
+            this.depthOffsets.pop();
+            this.postcards.pop().unload();
+        } else {
+            this.depthOffsets.shift();
+            this.postcards.shift().unload();
+        }
+    }
+
+    // Initializes the event listeners for the stamp:
+    //   - listen for mouse move
+    //   - listen for mouse down
+    initializeEventListeners() {
+        let handleMouseUpForNext = (event) => {
+            if (this.isMousingToNextCard()) {
+                this.moveFrontToBack()
+            }
+        };
+
+        let handleMouseUpForPrev = (event) => {
+            if (this.isMousingToPrevCard()) {
+                this.moveBackToFront()
+            }
+        };
+
+        addEventListener("mousedown", (event) => {
+            if (this.isMousingToNextCard()) {
+                addEventListener("mouseup", handleMouseUpForNext, {once : true})
+            } else if (this.isMousingToPrevCard()) {
+                addEventListener("mouseup", handleMouseUpForPrev, {once : true})
+            }
+        });
+    }
+
+    // Move the front card to the back of the stack
+    moveFrontToBack() {
+        const topCardIndex = this.postcards.findIndex((postcard) => {return postcard.status !== 1})
+        const topCard=this.postcards[topCardIndex]
+        // trigger unload
+        topCard.status = 1;
+        this.topCardHoverOffset = 0;
+        // load
+        topCard.disable();
+        this.postcards[topCardIndex+1].enable();
+        this.loadNextPostcard();
+        console.log(this.postcards[0].path)
+    }
+
+    // Move the back card to the front of the stack
+    moveBackToFront() {
+        const bottomCard = this.postcards.findLast((postcard) => {return postcard.status !== -1});
+        // trigger unload
+        bottomCard.status = -1;
+        // load
+        this.loadNextPostcard(true);
+        this.postcards[0].enable();
+        this.postcards[1].disable();
+        // trigger load transistion
+        this.postcards[0].x = - this.width;
+        this.postcards[0].status = 2;
+        this.topCardHoverOffset = 0;
+        // unload
+        this.postcards[this.postcards.length - 1].status = -1;
+    }
+
+    /*
+
+    Card Stack Behavior:
+    
+    -- Card Consolidation --
+    The card stack is tightly stacked when in transit. Once it becomes stationary, it "relaxes" its stack
+    so that cards in front are staggered slightly up and to the right. When the user begins to scroll,
+    things quickly tighten back up.
+
+    -- Card Hovering --
+    When the user hovers over near far right side of the postcard, the postcard at the back of the stack
+    shifts slightly to the right, exposing it more than before. When the user hovers over near the left
+    side of the top card, then the top card will shift slightly left. The motion is fast, slow, then rest.
+
+    -- Solution to the above --
+    1. An array of cards
+    2. An array of card offsets (for depth) - we don't need a "goal" array here because that goal is just
+    '(index-1) * DEPTH_OFFSET'.
+    3. LOGIC:
+        a. if the cardstack is in motion (target pos != pos), card offset "goals" are just 0 across the board
+        b. if the cardstack is stationary, card offset "goals" are standard (see bullet '2.')
+        c. top card offset is handled seperately altogether
+
+    
+    -- Card Clicking -- 
+    If the user clicks on the right side of the postcard and NOT on a stamp, the postcard at the top of
+    the stack will move to the back, and the card beneath will take its place
+
+    -- Card Loading and Unloading --
+    Ultimately, we want 3-4 cards actually visible:
+    1. Top card is unobscured
+    2. Second card is mostly visible, but a transparent film should be added to show it in the shade
+    3. Third card should be loaded, but mostly or completely in shade
+    4. Fourth card is totally obscured and doesn't need to be loaded
+
+    Outline of code behavior:
+    1. Calculate and set the position of the cardstack as a whole
+    2. Update depth offsets
+    3. Update outlier offsets
+        a. Click handling for the top card
+            i. Load + Unload
+            ii. Movement of the top card
+        b. Hover handling for the top card (ONLY if click handling was not being done)
+
+    */
+    update() {
+        this.updateCardStackPosition()
+        // Standard behaviors
+        this.updatePostcardLocations()
+        // Outlier behaviors
+        this.handleMousePosition()
+    }
+
+    isMousingToPrevCard() {
+        return (0 < (-this.x + canvasMouseX) && (-this.x + canvasMouseX) < this.width/2 && 
+            0 < (-this.y + canvasMouseY) && (-this.y + canvasMouseY) < this.height );
+    }
+
+    isMousingToNextCard() {
+        return (this.width > (-this.x + canvasMouseX) && (-this.x + canvasMouseX) > this.width/2 && 
+            0 < (-this.y + canvasMouseY) && (-this.y + canvasMouseY) < this.height );
+    }
+
+    handleMousePosition() {
+        // 1.) Update hover based offset
+        if (this.isMousingToNextCard() && this.postcards[0].status !== 2)
+        {
+            if (this.topCardHoverOffset > .999) {
+                this.topCardHoverOffset = .999;
+            } else  {
+                this.topCardHoverOffset -= 0.25 * (this.topCardHoverOffset*this.topCardHoverOffset - this.topCardHoverOffset);
+            }
+        } else {
+            if (this.topCardHoverOffset < 0.001) {
+                this.topCardHoverOffset = 0.001;
+            } else  {
+                this.topCardHoverOffset += 0.25 * (this.topCardHoverOffset*this.topCardHoverOffset - this.topCardHoverOffset);
+            }
+        }
+        // 2.) Update top card position
+        this.postcards[0].x -= this.topCardHoverOffset*60;
+        this.postcards[0].updateStamps();
+    }
+
+    updatePostcardLocations() {
+        // Handle offset array
+        if (currScrollPosition > .5 && targetScrollPosition-currScrollPosition > -.001 && targetScrollPosition-currScrollPosition < .001) {
+            for (var index=0; index<this.depthOffsets.length; index++) {
+                if (this.postcards[index].status != -1) {
+                    this.depthOffsets[index] += (((index - 1) * POSTCARD_OVERLAP_OFFSET) - this.depthOffsets[index]) / 30
+                }
+            }
+        } else {
+            for (var index=0; index<this.depthOffsets.length; index++) {
+                if (this.postcards[index].status != -1) {
+                    this.depthOffsets[index] -= this.depthOffsets[index] / 20
+                }
+                this.topCardHoverOffset=0;
+            } 
+        }
+
+        // Update cards with new offset value
+        for (const [index, card] of this.postcards.entries()) {
+            if (card.status === 0) { // Stable/normal card state
+                card.setOrigin(this.x + this.depthOffsets[index], this.y + this.depthOffsets[index]);
+            } else if (card.status === 1) { // Top card unloading (flying off)
+                card.setOrigin(card.x - 1 - Math.abs((card.x - this.x) / 2), this.y + this.depthOffsets[index]);
+                if (card.x < -card.width) {
+                    this.unloadPostcard()
+                }
+            } else if (card.status === 2) { // Back card loading (flying on)
+                card.setOrigin(card.x + ((this.x + this.depthOffsets[index] - card.x) / 20), this.y + this.depthOffsets[index]);
+                if (Math.floor(this.x + this.depthOffsets[index] - card.x) <= 1) {
+                    card.status = 0;
+                }
+            } else if (card.status === -1) { // Back card unloading (fading out)
+                if (this.depthOffsets[index] + POSTCARD_OVERLAP_OFFSET >= POSTCARD_CARD_COUNT * POSTCARD_OVERLAP_OFFSET) {
+                    this.unloadPostcard(true);
+                } else {
+                    this.depthOffsets[index] += 2
+                }
+            }
+            card.update()
+        }
+
+    }
+
+    updateCardStackPosition() {  // for an efficiency gain, consider removing the trig func infavor of a polynomial
+        let sendOffScreenMultiplier = - Math.tanh(10 * currScrollPosition - .2 ) + 1
+        this.setCenter(centerX - (800 * (1 - currScrollPosition)) - (3000 * sendOffScreenMultiplier),centerY); 
+    }
+
+    draw(ctx) { 
+        // Draw main card stack
+        for (var i=this.postcards.length-1; i>=0; i--) {
+            this.postcards[i].draw(ctx);
+            ctx.globalAlpha = (this.depthOffsets[i] + POSTCARD_OVERLAP_OFFSET)/(POSTCARD_CARD_COUNT * POSTCARD_OVERLAP_OFFSET);
+            
+            ctx.fillRect(Math.floor(this.postcards[i].x),Math.floor(this.postcards[i].y),this.width,this.height)
+            ctx.globalAlpha = 1;
+        }
+    }
 }
 
 function webpageCoordToCanvasCoord(x, y) {
@@ -329,25 +641,66 @@ function createImageFromPath(path) {
 // MOUNTAINS
 const mountains = new ScaledImage(MOUNTAINS_PATH,imgScale);
 mountains.update = function () { 
-    this.setCenter(centerX,centerY - (currScrollPosition * 1000))
+    this.setCenter(centerX,centerY - ((currScrollPosition + backgroundHoverOffset) * 1000))
 }
 
 // PINES
 const pines = new ScaledImage(PINES_PATH,imgScale);
 pines.update = function () { 
-    this.setCenter(centerX,centerY + (currScrollPosition*800))
+    this.setCenter(centerX,centerY + ((currScrollPosition + backgroundHoverOffset) * 800) + 500)
 }
 
-// SCROLL INDICATOR
-//const scrollIndicator = new Sprite(null,SCROLL_PATH,SCROLL_FRAMES);
-//scrollIndicator.update = function () { this.curr_frame = frame };
+// LABELS
+const about = new Sprite(null,LABELS_PATH,2,2,0);
+about.update = function () { 
+    this.setCenter(centerX + 180,centerY - ((currScrollPosition + backgroundHoverOffset) * 1000) + 90)
+    // We want to confirm that the converted X and Y click difference is not outside the width (x and y here are center)
+    if (canvasMouseY > 305 && canvasMouseY < 518) 
+    {
+        this.curr_frame=1;
+    } else {
+        this.curr_frame=0;
+    }
+}
+/*
+const play = new Sprite(null,LABELS_PATH,2,2,1);
+play.update = function () { 
+    this.setCenter(centerX + 190,centerY + ((currScrollPosition + backgroundHoverOffset) * 800) + 190)
+    if (canvasMouseY > 518) 
+    {
+        this.curr_frame=1;
+    } else {
+        this.curr_frame=0;
+    }
+}
+*/
+// POST CARDS
+const postcards = new CardStack(POSTCARD_PATH_PREFIX);
 
-// POST CARD
-const postcard = new Postcard(POSTCARD_PATH);
+// Transition Setup
+addEventListener("mousedown",(event) => {
+    if (currScrollPosition < 0.01 && currScrollPosition > -0.01) { // Home case
+        if (about.curr_frame===1) { addEventListener("mouseup", (event) => { 
+            if (about.curr_frame===1 && !isTransitioning && targetScrollPosition < 0.01 && targetScrollPosition > -0.01) {
+                transitioningTo=1;
+                isTransitioning=true;
+            }
+        }, {once : true}) } 
+    } else if (currScrollPosition > 0.99 && currScrollPosition < 1.01) { // Postcard case
+        if ((postcards.x > canvasMouseX) || (postcards.y > canvasMouseY) || (postcards.y + postcards.height < canvasMouseY) || 
+            (postcards.x + postcards.width < canvasMouseX)) { addEventListener("mouseup", (event) => { 
+            if ((postcards.x < canvasMouseX) || (postcards.y > canvasMouseY) || (postcards.y + postcards.height > canvasMouseY) || 
+                (postcards.x + postcards.width > canvasMouseX) && !isTransitioning && currScrollPosition > 0.99 && currScrollPosition < 1.01) {
+                transitioningTo=0;
+                isTransitioning=true;
+            }
+        }, {once : true}) } 
+    }
+});
 
 // List of all sprites
-const background = [mountains];
-const midground = [postcard];
+const background = [mountains,about];
+const midground = [postcards];
 const foreground = [pines];
 const layers = [background, midground, foreground];
 // #endregion - Object Instantiation
@@ -374,13 +727,16 @@ function webLoop() {
     minDrawWidth = canvas.width - maxDrawWidth;
 
     // Scroll
-    //scrollIndicator.setCenter(centerX,maxDrawHeight - 40);
     updateScroll();
 
     // Drawing
     // 1.) clear
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#6e3e15";
+    if (currScrollPosition < 0) {
+        ctx.fillStyle = "#e1f2dd";
+    } else {
+        ctx.fillStyle = "#6e3e15";
+    }
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // 2.) update all sprites from all layers
@@ -398,24 +754,13 @@ function webLoop() {
             sprite.draw(ctx);
         }
     }
-    
-    // Scroll indicator
-    /*if ((frame > 100) && (currScrollPosition === 0)) {
-        ctx.globalAlpha = Math.tanh((frame-100)/100)
-        scrollIndicator.draw(ctx);
-    }*/
-    
+    if (done) { return; }
     // Loop
     requestAnimationFrame(webLoop);
 }
 // #endregion - Main Loop
 
 function run() {
-    //console.log(canvas.width)
-    //console.log(canvas.height)
-    //console.log(screen.availwidth)
-    //console.log(maxDrawHeight)
-    let done = false;
     webLoop();
 }
 
@@ -456,5 +801,13 @@ questions:
     For a Postcard, how versatile should the stamp assigment be?
      - For now, I'll hard code it. If I want to have a bunch of card moving forward, it'd be pretty slick to have an enum
      that I can use to apply stamps in the costructor of the postcard.
+
+New UI planning:
+ - Pressing buttons will prompt the user to click on either the mountains or the trees
+ - Clicking the mountains > transition to postcard
+ - Clicking the trees > transistion to game
+ - Clicking on the postcard > switches between cards
+ - Clicking outside of the postcard > switches back to home
+ Dragging????
 
 */
