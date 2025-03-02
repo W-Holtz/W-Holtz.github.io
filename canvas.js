@@ -1,5 +1,8 @@
 // #region - Constants
 const MAX_FRAMES = 1000
+// MOBILE MESSAGE
+const MOBILE_MESSAGE = './MobileWarning.png';
+const WINDOW = './Window.png';
 // MOUNTAINS
 const MOUNTAINS_PATH = './mountains3.png';
 // PINES
@@ -56,6 +59,7 @@ let minDrawHeight = canvas.height - maxDrawHeight;
 let minDrawWidth = canvas.width - maxDrawWidth;
 let centerX = ((canvas.width/2));
 let centerY = ((canvas.height/2));
+let sidebarWidth;
 
 // Scrolling Setup
 let targetScrollPosition = 0;
@@ -198,14 +202,30 @@ class Sprite {
 
 class ScaledImage extends Sprite {
 
-    constructor(path,scale) {
+    constructor(path,scale,opacity=1) {
         super(null,path);
         this.scale = scale;
+        this.opacity = opacity;
     }
 
     draw(ctx, frame = 0, skin = 0) {
+        ctx.globalAlpha = this.opacity;
         super.draw(ctx, this.scale);
+        ctx.globalAlpha = 1;
     }
+}
+
+class PineBorder extends ScaledImage {
+    
+    draw(ctx) {
+        super.draw(ctx, this.scale);
+        let borderWidth = Math.floor((canvas.width-(this.width*scale))/2) + 1;
+        ctx.fillStyle = "#000000";
+        console.log(borderWidth)
+        ctx.fillRect(0, 0, this.x, canvas.height);
+        ctx.fillRect(this.x+this.width-1, 0, this.x+this.width+borderWidth, canvas.height);
+    }
+
 }
 
 class Stamp extends Sprite {
@@ -224,7 +244,6 @@ class Stamp extends Sprite {
     //   - listen for mouse move
     //   - listen for mouse down
     initializeEventListeners() {
-        console.log("initial")
         let handleMouseUp = (event) => {
             if (this.curr_frame===1) {
                 switch(this.curr_skin) {
@@ -441,7 +460,6 @@ class CardStack extends Sprite{
         topCard.disable();
         this.postcards[topCardIndex+1].enable();
         this.loadNextPostcard();
-        console.log(this.postcards[0].path)
     }
 
     // Move the back card to the front of the stack
@@ -645,7 +663,7 @@ mountains.update = function () {
 }
 
 // PINES
-const pines = new ScaledImage(PINES_PATH,imgScale);
+const pines = new PineBorder(PINES_PATH,imgScale);
 pines.update = function () { 
     this.setCenter(centerX,centerY + ((currScrollPosition + backgroundHoverOffset) * 800) + 500)
 }
@@ -655,7 +673,7 @@ const about = new Sprite(null,LABELS_PATH,2,2,0);
 about.update = function () { 
     this.setCenter(centerX + 180,centerY - ((currScrollPosition + backgroundHoverOffset) * 1000) + 90)
     // We want to confirm that the converted X and Y click difference is not outside the width (x and y here are center)
-    if (canvasMouseY > 305 && canvasMouseY < 518) 
+    if (canvasMouseY > this.y - 120 && canvasMouseY < this.y + 100) 
     {
         this.curr_frame=1;
     } else {
@@ -676,7 +694,6 @@ play.update = function () {
 */
 // POST CARDS
 const postcards = new CardStack(POSTCARD_PATH_PREFIX);
-
 // Transition Setup
 addEventListener("mousedown",(event) => {
     if (currScrollPosition < 0.01 && currScrollPosition > -0.01) { // Home case
@@ -698,11 +715,41 @@ addEventListener("mousedown",(event) => {
     }
 });
 
+// MOBILE ONLY
+const mobileMessage = new ScaledImage(MOBILE_MESSAGE,1,0);
+const windowPane = new ScaledImage(WINDOW,1,1);
+
 // List of all sprites
 const background = [mountains,about];
 const midground = [postcards];
 const foreground = [pines];
-const layers = [background, midground, foreground];
+const layers = [];
+if (mobile) {
+    layers.push([windowPane,mobileMessage]);
+    mobileMessage.setCenter(centerX,centerY);
+    windowPane.setCenter(centerX,centerY);
+
+    // Transition Setup
+    addEventListener("click",(event) => {
+        windowPane.update = function () { 
+            if (this.opacity === 0) {
+                if (mobileMessage.opactiy !== 1) {
+                    mobileMessage.opacity += .2;
+                    if (mobileMessage.opacity > 1) { 
+                        mobileMessage.opacity = 1;
+                    }
+                }
+            }
+            this.opacity -= 0.2;
+            if (this.opacity < 0) {
+                this.opacity = 0;
+            }
+        }
+    }, {once : true});
+
+} else {
+    layers.push(background, midground, foreground);
+}
 // #endregion - Object Instantiation
 
 
@@ -714,6 +761,20 @@ function webLoop() {
         frame++ 
         if (frame > MAX_FRAMES) { frame = 0 }
     };
+
+    if (frame === 10 && windowPane.opacity === 1) {
+        windowPane.update = function () { 
+            if (this.opacity === 0) {
+                if (mobileMessage.opactiy !== 1) {
+                    mobileMessage.opacity += .05
+                }
+            }
+            this.opacity -= 0.02;
+            if (this.opacity < 0) {
+                this.opacity = 0;
+            }
+        }
+    }
     
     // Context updating
     canvas.width = window.innerWidth;
@@ -732,7 +793,9 @@ function webLoop() {
     // Drawing
     // 1.) clear
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (currScrollPosition < 0) {
+    if (mobile) {
+        ctx.fillStyle = "#90956c";
+    } else if (currScrollPosition < 0) {
         ctx.fillStyle = "#e1f2dd";
     } else {
         ctx.fillStyle = "#6e3e15";
@@ -754,6 +817,7 @@ function webLoop() {
             sprite.draw(ctx);
         }
     }
+
     if (done) { return; }
     // Loop
     requestAnimationFrame(webLoop);
