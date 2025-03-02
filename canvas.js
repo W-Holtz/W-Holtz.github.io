@@ -780,6 +780,9 @@ function webLoop() {
     }
     
     // Context updating
+    scale = 1;
+    // Apply the scaling factor to the context
+    canvas.style.scale = scale;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     scale = Number(canvasStyle.scale);
@@ -820,8 +823,11 @@ function webLoop() {
             sprite.draw(ctx);
         }
     }
-    //ctx.fillStyle = "#000000";
-    //ctx.fillText(centerX +" "+ centerY,200,200)
+    ctx.fillStyle = "#000000";
+    ctx.fillText("0" + " "+centerX +" "+ centerY,0,0)
+    ctx.fillText("50" + " "+centerX +" "+ centerY,50,50)
+    ctx.fillText("100" + " "+centerX +" "+ centerY,100,100)
+    ctx.fillText("200" + " "+centerX +" "+ centerY,200,200)
 
     if (done) { return; }
     // Loop
