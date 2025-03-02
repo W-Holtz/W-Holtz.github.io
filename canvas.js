@@ -1,8 +1,8 @@
 // #region - Constants
 const MAX_FRAMES = 1000
 // MOBILE MESSAGE
-const MOBILE_MESSAGE = './MobileWarning.png';
-const WINDOW = './Window.png';
+const MOBILE_MESSAGE = './mobileWarning.png';
+const WINDOW = './window.png';
 // MOUNTAINS
 const MOUNTAINS_PATH = './mountains3.png';
 // PINES
