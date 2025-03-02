@@ -221,7 +221,6 @@ class PineBorder extends ScaledImage {
         super.draw(ctx, this.scale);
         let borderWidth = Math.floor((canvas.width-(this.width*scale))/2) + 1;
         ctx.fillStyle = "#000000";
-        console.log(borderWidth)
         ctx.fillRect(0, 0, this.x, canvas.height);
         ctx.fillRect(this.x+this.width-1, 0, this.x+this.width+borderWidth, canvas.height);
     }
@@ -717,12 +716,15 @@ addEventListener("mousedown",(event) => {
 
 // MOBILE ONLY
 const mobileMessage = new ScaledImage(MOBILE_MESSAGE,1,0);
+mobileMessage.update = function () { this.setCenter(centerX,centerY)};
 const windowPane = new ScaledImage(WINDOW,1,1);
+windowPane.update = function () { this.setCenter(centerX,centerY)};
 
 // List of all sprites
 const background = [mountains,about];
 const midground = [postcards];
 const foreground = [pines];
+let foo = 1
 const layers = [];
 if (mobile) {
     layers.push([windowPane,mobileMessage]);
@@ -732,15 +734,16 @@ if (mobile) {
     // Transition Setup
     addEventListener("click",(event) => {
         windowPane.update = function () { 
+            this.setCenter(centerX,centerY);
             if (this.opacity === 0) {
                 if (mobileMessage.opactiy !== 1) {
-                    mobileMessage.opacity += .2;
+                    mobileMessage.opacity += .1;
                     if (mobileMessage.opacity > 1) { 
                         mobileMessage.opacity = 1;
                     }
                 }
             }
-            this.opacity -= 0.2;
+            this.opacity -= 0.1;
             if (this.opacity < 0) {
                 this.opacity = 0;
             }
@@ -762,14 +765,14 @@ function webLoop() {
         if (frame > MAX_FRAMES) { frame = 0 }
     };
 
-    if (frame === 10 && windowPane.opacity === 1) {
+    if (frame === 40 && windowPane.opacity === 1) {
         windowPane.update = function () { 
             if (this.opacity === 0) {
                 if (mobileMessage.opactiy !== 1) {
-                    mobileMessage.opacity += .05
+                    mobileMessage.opacity += .04
                 }
             }
-            this.opacity -= 0.02;
+            this.opacity -= 0.01;
             if (this.opacity < 0) {
                 this.opacity = 0;
             }
@@ -795,7 +798,7 @@ function webLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (mobile) {
         ctx.fillStyle = "#90956c";
-    } else if (currScrollPosition < 0) {
+    } else if (currScrollPosition < .2) {
         ctx.fillStyle = "#e1f2dd";
     } else {
         ctx.fillStyle = "#6e3e15";
@@ -817,6 +820,8 @@ function webLoop() {
             sprite.draw(ctx);
         }
     }
+    //ctx.fillStyle = "#000000";
+    //ctx.fillText(centerX +" "+ centerY,200,200)
 
     if (done) { return; }
     // Loop
