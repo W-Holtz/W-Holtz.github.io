@@ -47,10 +47,9 @@ ctx.imageSmoothingEnabled = false;
 
 // Handle mobile vs desktop
 let scale = Number(canvasStyle.scale);
-const mobile = (canvasStyle.scale === "1") // assume mobile if the canvas start with this css scale
+const mobile = false//(canvasStyle.scale === "1") // assume mobile if the canvas start with this css scale
 // Update canvas dimensions
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+resizeCanvas();
 
 // Time and Frame Setup
 let frame = 0;
@@ -108,9 +107,9 @@ function updateScroll() { // For an efficiency gain, convert this to a polynomia
     } else {
         targetScrollPosition += -0.01 * Math.sin((targetScrollPosition) * 2 * Math.PI ); // <- Derivative of the cos() that give us a good change in position
         currScrollPosition += 0.1 * (targetScrollPosition - currScrollPosition);
-        if (currScrollPosition <= -.95) {
-            window.location.href = "game.html";
-        }
+        //if (currScrollPosition <= -.95) {
+        //    window.location.href = "game.html";
+        //}
     }
 }
 
@@ -145,13 +144,14 @@ document.addEventListener('mousemove', mouseMovementHandler);
 // #region - Sprite Classes/Function Declaration
 class Sprite {
 
-    constructor(spriteSheet, path, frames=1, skins=1, curr_skin=0) {
+    constructor(spriteSheet, path, frames=1, skins=1, curr_skin=0, opacity=1) {
         this.frameCount = frames;
         this.curr_frame = 0;
         this.skinCount = skins;
         this.curr_skin = curr_skin;
         this.x = 0;
         this.y = 0;
+        this.opacity = opacity;
         if (spriteSheet != null) {
             this.spriteSheet = spriteSheet;
         } else {
@@ -192,6 +192,7 @@ class Sprite {
 
     draw(ctx, scale = 1) {
         // Draw
+        ctx.globalAlpha = this.opacity;
         ctx.drawImage(
             this.spriteSheet,
             this.width*(this.curr_frame),
@@ -203,6 +204,7 @@ class Sprite {
             this.width*scale,
             this.height*scale
         );
+        ctx.globalAlpha = 1;
     }
 
     update() {
@@ -213,15 +215,12 @@ class Sprite {
 class ScaledImage extends Sprite {
 
     constructor(path,scale,opacity=1) {
-        super(null,path);
+        super(null,path,1,1,0,opacity);
         this.scale = scale;
-        this.opacity = opacity;
     }
 
     draw(ctx, frame = 0, skin = 0) {
-        ctx.globalAlpha = this.opacity;
         super.draw(ctx, this.scale);
-        ctx.globalAlpha = 1;
     }
 }
 
@@ -231,8 +230,16 @@ class PineBorder extends ScaledImage {
         super.draw(ctx, this.scale);
         let borderWidth = Math.floor((canvas.width-(this.width*scale))/2) + 1;
         ctx.fillStyle = "#000000";
+        // Handle Borders
         ctx.fillRect(0, 0, this.x, canvas.height);
         ctx.fillRect(this.x+this.width-1, 0, this.x+this.width+borderWidth, canvas.height);
+        ctx.fillRect(0, this.y+this.height-1, canvas.width, canvas.height);
+        // Handle fade to black
+        if (currScrollPosition <= -.6) {
+            ctx.globalAlpha = - (2.5 * (currScrollPosition + .6));
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        ctx.globalAlpha = 1;
     }
 
 }
@@ -339,6 +346,7 @@ class Postcard extends Sprite {
         };
         this.path=path;
         this.status = 0; // TODO : Add an enum - 0 is stable, 1 is flying out, 2 in flying in, -1 is fading into the ether
+        console.log(this.width)
     }
 
     unload() {
@@ -669,12 +677,24 @@ function createImageFromPath(path) {
 const mountains = new ScaledImage(MOUNTAINS_PATH,imgScale);
 mountains.update = function () { 
     this.setCenter(centerX,centerY - ((currScrollPosition + backgroundHoverOffset) * 1000))
+    if (currScrollPosition >= .8) { 
+        this.opacity = 5 - (5 * currScrollPosition);
+        if (currScrollPosition >= 1) {this.opacity = 0;}
+    } else {
+        this.opacity = 1;
+    }
 }
 
 // PINES
 const pines = new PineBorder(PINES_PATH,imgScale);
 pines.update = function () { 
     this.setCenter(centerX,centerY + ((currScrollPosition + backgroundHoverOffset) * 800) + 500)
+    if (currScrollPosition >= .8) { 
+        this.opacity = 5 - (5 * currScrollPosition)
+        if (currScrollPosition >= 1) {this.opacity =0;}
+    } else {
+        this.opacity = 1;
+    }
 }
 
 // LABELS
@@ -687,6 +707,12 @@ about.update = function () {
         this.curr_frame=1;
     } else {
         this.curr_frame=0;
+    }
+    if (currScrollPosition >= .8) { 
+        this.opacity = 5 - (5 * currScrollPosition)
+        if (currScrollPosition >= 1) {this.opacity =0;}
+    } else {
+        this.opacity = 1;
     }
 }
 /*
