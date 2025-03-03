@@ -1,7 +1,12 @@
-body {
+
+
+html, body {
     margin: 0;
     overflow: hidden; /* Prevent scrollbars */
     scale: 1;
+    overflow-x: show;
+    padding: env(safe-area-inset);
+    color:black
 }
 
 canvas {
