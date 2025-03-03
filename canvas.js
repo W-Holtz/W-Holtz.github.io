@@ -32,6 +32,13 @@ const STAMPS_SKINS = 3;
 let canvas = document.querySelector('canvas');
 let canvasStyle = window.getComputedStyle(canvas);
 const ctx = canvas.getContext('2d');
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+
+window.addEventListener("resize", resizeCanvas);
+window.addEventListener("orientationchange", resizeCanvas);
 
 // Update the canvas context to support pixel drawing
 ctx.webkitImageSmoothingEnabled = false;
@@ -73,8 +80,8 @@ addEventListener("wheel", (event) => {
     targetScrollPosition += 0.001 * event.deltaY;
     if (targetScrollPosition >= 1.1) {
         targetScrollPosition = 1.1;
-    } else if (targetScrollPosition <= -0.1) {
-        targetScrollPosition = -0.1;
+    } else if (targetScrollPosition <= -1.1) {
+        targetScrollPosition = -1.1;
     }
 });
 
@@ -101,6 +108,9 @@ function updateScroll() { // For an efficiency gain, convert this to a polynomia
     } else {
         targetScrollPosition += -0.01 * Math.sin((targetScrollPosition) * 2 * Math.PI ); // <- Derivative of the cos() that give us a good change in position
         currScrollPosition += 0.1 * (targetScrollPosition - currScrollPosition);
+        if (currScrollPosition <= -.95) {
+            window.location.href = "game.html";
+        }
     }
 }
 
@@ -758,6 +768,7 @@ if (mobile) {
 
 // #region - Main Loop
 function webLoop() {
+
     // Time logging
     tick++;
     if ((tick % stagger) == 0) { 
@@ -780,9 +791,6 @@ function webLoop() {
     }
     
     // Context updating
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    scale = Number(canvasStyle.scale);
     centerX = ((canvas.width/2));
     centerY = ((canvas.height/2));
     maxDrawHeight = (canvas.height * ((1+scale)/(2*scale)));
