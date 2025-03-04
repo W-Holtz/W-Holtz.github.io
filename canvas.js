@@ -47,7 +47,7 @@ ctx.imageSmoothingEnabled = false;
 
 // Handle mobile vs desktop
 let scale = Number(canvasStyle.scale);
-const mobile = false//(canvasStyle.scale === "1") // assume mobile if the canvas start with this css scale
+const mobile = (canvasStyle.scale === "1") // assume mobile if the canvas start with this css scale
 // Update canvas dimensions
 resizeCanvas();
 
@@ -79,8 +79,8 @@ addEventListener("wheel", (event) => {
     targetScrollPosition += 0.001 * event.deltaY;
     if (targetScrollPosition >= 1.1) {
         targetScrollPosition = 1.1;
-    } else if (targetScrollPosition <= -1.1) {
-        targetScrollPosition = -1.1;
+    } else if (targetScrollPosition <= -.2) {
+        targetScrollPosition = -.2;
     }
 });
 
