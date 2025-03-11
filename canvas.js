@@ -1,5 +1,7 @@
 // #region - Constants
 const MAX_FRAMES = 1000
+const MIN_VIEW_SIZE = 800
+const MIN_VIEW_HEIGTH = 600
 // MOBILE MESSAGE
 const MOBILE_MESSAGE = './mobileWarning.png';
 const WINDOW = './window.png';
@@ -26,19 +28,48 @@ const STAMPS_FRAMES = 2;
 const STAMPS_SKINS = 3;
 // #endregion - Constants
 
-
 // #region - Context/canvas setup
 // Get canvas obj
 let canvas = document.querySelector('canvas');
 let canvasStyle = window.getComputedStyle(canvas);
 const ctx = canvas.getContext('2d');
+let widthToHeightRatio=1
+
+
+/* 
+
+--- RESIZING ---
+This one has proven the most troublesome. I could easily resize the images that I draw, but then
+the quality is compromised. The only resize function that doesn't blur the images, is the CSS
+scale function. However, I run into issues when resizing dynamically via script. For some reason
+if the scale is applied this way, then the canvas simply refuses to have its heigh and width adjusted.
+Once we are in JS land, it seems like the scale affects the height and width directly, whereas if we
+scal ahead of time in the css file, the height and width set by JS are equal to height and width of
+the viewport.
+
+
+*/
+
 function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    widthToHeightRatio=(window.innerWidth)/window.innerHeight
+
+    if (widthToHeightRatio< 1.333333333) {
+        document.querySelector('canvas').style.width = '101dvw';
+        document.querySelector('canvas').style.height = '100%';
+        canvas.width = MIN_VIEW_SIZE;
+        canvas.height=MIN_VIEW_SIZE/widthToHeightRatio;
+    } else {
+        document.querySelector('canvas').style.height = '101dvh';
+        document.querySelector('canvas').style.width = '100%';
+        canvas.height = MIN_VIEW_HEIGTH;
+        canvas.width=MIN_VIEW_HEIGTH*widthToHeightRatio;
+    }
 }
 
 window.addEventListener("resize", resizeCanvas);
 window.addEventListener("orientationchange", resizeCanvas);
+document.addEventListener("wheel", (event) => event.preventDefault(), { passive: false });
+document.addEventListener("touchmove", (event) => event.preventDefault(), { passive: false });
 
 // Update the canvas context to support pixel drawing
 ctx.webkitImageSmoothingEnabled = false;
@@ -58,14 +89,8 @@ const stagger = 3;
 let done = false;
 
 // Image and Canvas Context Setup
-const imgScale = mobile ? 0.5 : 1; // scaling for mobile
-let maxDrawHeight = (canvas.height * ((1+scale)/(2*scale)));
-let maxDrawWidth = (canvas.width * ((1+scale)/(2*scale)));
-let minDrawHeight = canvas.height - maxDrawHeight;
-let minDrawWidth = canvas.width - maxDrawWidth;
 let centerX = ((canvas.width/2));
 let centerY = ((canvas.height/2));
-let sidebarWidth;
 
 // Scrolling Setup
 let targetScrollPosition = 0;
@@ -224,22 +249,56 @@ class ScaledImage extends Sprite {
     }
 }
 
+
+class MountainBackdrop extends ScaledImage {
+    
+    draw(ctx) {
+        super.draw(ctx, this.scale);
+        // Handle Sky
+        ctx.fillStyle = "#e1f2dd";
+        ctx.fillRect(0, 0, canvas.width, this.y); // left
+        ctx.globalAlpha = 1;
+    }
+
+    update() { 
+        this.setCenter(centerX,centerY - ((currScrollPosition + backgroundHoverOffset) * 1000))
+        if (currScrollPosition >= .8) { 
+            this.opacity = 5 - (5 * currScrollPosition);
+            if (currScrollPosition >= 1) {this.opacity = 0;}
+        } else {
+            this.opacity = 1;
+        }
+    }
+}
+
+
 class PineBorder extends ScaledImage {
     
     draw(ctx) {
         super.draw(ctx, this.scale);
-        let borderWidth = Math.floor((canvas.width-(this.width*scale))/2) + 1;
         ctx.fillStyle = "#000000";
         // Handle Borders
-        ctx.fillRect(0, 0, this.x, canvas.height);
-        ctx.fillRect(this.x+this.width-1, 0, this.x+this.width+borderWidth, canvas.height);
-        ctx.fillRect(0, this.y+this.height-1, canvas.width, canvas.height);
+        ctx.globalAlpha=this.opacity;
+        ctx.fillRect(0, 0, this.x, canvas.height); // left
+        ctx.fillRect(this.x+this.width-1, 0, canvas.width, canvas.height); // right
+        ctx.fillRect(0, this.y+this.height-1, canvas.width, canvas.height); // bottom
+
         // Handle fade to black
         if (currScrollPosition <= -.6) {
             ctx.globalAlpha = - (2.5 * (currScrollPosition + .6));
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
         ctx.globalAlpha = 1;
+    }
+
+    update() { 
+        this.setCenter(centerX,centerY + ((currScrollPosition + backgroundHoverOffset) * 800) + 500)
+        if (currScrollPosition >= .8) { 
+            this.opacity = 5 - (5 * currScrollPosition)
+            if (currScrollPosition >= 1) {this.opacity =0;}
+        } else {
+            this.opacity = 1;
+        }
     }
 
 }
@@ -260,28 +319,25 @@ class Stamp extends Sprite {
     //   - listen for mouse move
     //   - listen for mouse down
     initializeEventListeners() {
-        let handleMouseUp = (event) => {
+        let handleClick = (event) => {
             if (this.curr_frame===1) {
                 switch(this.curr_skin) {
                     case 0:
                         window.location.href = "https://open.spotify.com/user/williamholtz?fo=1&a="; 
-                        done=true;
                         break;
                     case 1:
                         window.location.href = "https://www.linkedin.com/in/william-holtz-ab8981123"; 
-                        done=true;
                         break;
                     case 2:
                         window.location.href = "https://github.com/W-Holtz"; 
-                        done=true;
                         break;
                     default:
                 }
             }
         };
 
-        this.eventListeners.unshift(["mousedown",(event) => {
-            if (this.curr_frame===1 && this.isEnabled) { addEventListener("mouseup", handleMouseUp, {once : true}) } 
+        this.eventListeners.unshift(["click",(event) => { 
+            handleClick()
         }]);
 
         addEventListener(this.eventListeners[0][0], this.eventListeners[0][1]);
@@ -346,7 +402,6 @@ class Postcard extends Sprite {
         };
         this.path=path;
         this.status = 0; // TODO : Add an enum - 0 is stable, 1 is flying out, 2 in flying in, -1 is fading into the ether
-        console.log(this.width)
     }
 
     unload() {
@@ -459,9 +514,9 @@ class CardStack extends Sprite{
 
         addEventListener("mousedown", (event) => {
             if (this.isMousingToNextCard()) {
-                addEventListener("mouseup", handleMouseUpForNext, {once : true})
+                handleMouseUpForNext()
             } else if (this.isMousingToPrevCard()) {
-                addEventListener("mouseup", handleMouseUpForPrev, {once : true})
+                handleMouseUpForPrev()
             }
         });
     }
@@ -628,7 +683,8 @@ class CardStack extends Sprite{
         this.setCenter(centerX - (800 * (1 - currScrollPosition)) - (3000 * sendOffScreenMultiplier),centerY); 
     }
 
-    draw(ctx) { 
+    draw(ctx) {
+        ctx.fillStyle = "#6e3e15"; 
         // Draw main card stack
         for (var i=this.postcards.length-1; i>=0; i--) {
             this.postcards[i].draw(ctx);
@@ -641,7 +697,7 @@ class CardStack extends Sprite{
 }
 
 function webpageCoordToCanvasCoord(x, y) {
-   return [minDrawWidth+x/scale,minDrawHeight+y/scale];
+    return [x*canvas.width/canvas.clientWidth,y*canvas.height/canvas.clientHeight];
 }
 
 // #endregion - Sprite Classes/Function Declaration
@@ -674,28 +730,9 @@ function createImageFromPath(path) {
 
 // #region - Object Instantiation
 // MOUNTAINS
-const mountains = new ScaledImage(MOUNTAINS_PATH,imgScale);
-mountains.update = function () { 
-    this.setCenter(centerX,centerY - ((currScrollPosition + backgroundHoverOffset) * 1000))
-    if (currScrollPosition >= .8) { 
-        this.opacity = 5 - (5 * currScrollPosition);
-        if (currScrollPosition >= 1) {this.opacity = 0;}
-    } else {
-        this.opacity = 1;
-    }
-}
-
+const mountains = new MountainBackdrop(MOUNTAINS_PATH);
 // PINES
-const pines = new PineBorder(PINES_PATH,imgScale);
-pines.update = function () { 
-    this.setCenter(centerX,centerY + ((currScrollPosition + backgroundHoverOffset) * 800) + 500)
-    if (currScrollPosition >= .8) { 
-        this.opacity = 5 - (5 * currScrollPosition)
-        if (currScrollPosition >= 1) {this.opacity =0;}
-    } else {
-        this.opacity = 1;
-    }
-}
+const pines = new PineBorder(PINES_PATH);
 
 // LABELS
 const about = new Sprite(null,LABELS_PATH,2,2,0);
@@ -730,25 +767,17 @@ play.update = function () {
 // POST CARDS
 const postcards = new CardStack(POSTCARD_PATH_PREFIX);
 // Transition Setup
-addEventListener("mousedown",(event) => {
-    if (currScrollPosition < 0.01 && currScrollPosition > -0.01) { // Home case
-        if (about.curr_frame===1) { addEventListener("mouseup", (event) => { 
-            if (about.curr_frame===1 && !isTransitioning && targetScrollPosition < 0.01 && targetScrollPosition > -0.01) {
-                transitioningTo=1;
-                isTransitioning=true;
-            }
-        }, {once : true}) } 
-    } else if (currScrollPosition > 0.99 && currScrollPosition < 1.01) { // Postcard case
-        if ((postcards.x > canvasMouseX) || (postcards.y > canvasMouseY) || (postcards.y + postcards.height < canvasMouseY) || 
-            (postcards.x + postcards.width < canvasMouseX)) { addEventListener("mouseup", (event) => { 
-            if ((postcards.x < canvasMouseX) || (postcards.y > canvasMouseY) || (postcards.y + postcards.height > canvasMouseY) || 
-                (postcards.x + postcards.width > canvasMouseX) && !isTransitioning && currScrollPosition > 0.99 && currScrollPosition < 1.01) {
-                transitioningTo=0;
-                isTransitioning=true;
-            }
-        }, {once : true}) } 
+addEventListener("click",(event) => {
+    if (about.curr_frame===1 && !isTransitioning && targetScrollPosition < 0.01 && targetScrollPosition > -0.01) {
+        transitioningTo=1;
+        isTransitioning=true;
+    } else if (((postcards.x > canvasMouseX) || (postcards.y > canvasMouseY) || (postcards.y + postcards.height < canvasMouseY) || 
+    (postcards.x + postcards.width < canvasMouseX)) && !isTransitioning && currScrollPosition > 0.99 && currScrollPosition < 1.01) {
+    transitioningTo=0;
+    isTransitioning=true;
     }
 });
+
 
 // MOBILE ONLY
 const mobileMessage = new ScaledImage(MOBILE_MESSAGE,1,0);
@@ -760,7 +789,6 @@ windowPane.update = function () { this.setCenter(centerX,centerY)};
 const background = [mountains,about];
 const midground = [postcards];
 const foreground = [pines];
-let foo = 1
 const layers = [];
 if (mobile) {
     layers.push([windowPane,mobileMessage]);
@@ -798,31 +826,14 @@ function webLoop() {
     // Time logging
     tick++;
     if ((tick % stagger) == 0) { 
-        frame++ 
+        frame++;
         if (frame > MAX_FRAMES) { frame = 0 }
     };
-
-    if (frame === 40 && windowPane.opacity === 1) {
-        windowPane.update = function () { 
-            if (this.opacity === 0) {
-                if (mobileMessage.opactiy !== 1) {
-                    mobileMessage.opacity += .04
-                }
-            }
-            this.opacity -= 0.01;
-            if (this.opacity < 0) {
-                this.opacity = 0;
-            }
-        }
-    }
     
     // Context updating
+    resizeCanvas();
     centerX = ((canvas.width/2));
     centerY = ((canvas.height/2));
-    maxDrawHeight = (canvas.height * ((1+scale)/(2*scale)));
-    maxDrawWidth = (canvas.width * ((1+scale)/(2*scale)));
-    minDrawHeight = canvas.height - maxDrawHeight;
-    minDrawWidth = canvas.width - maxDrawWidth;
 
     // Scroll
     updateScroll();
@@ -830,13 +841,7 @@ function webLoop() {
     // Drawing
     // 1.) clear
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (mobile) {
-        ctx.fillStyle = "#90956c";
-    } else if (currScrollPosition < .2) {
-        ctx.fillStyle = "#e1f2dd";
-    } else {
-        ctx.fillStyle = "#6e3e15";
-    }
+    ctx.fillStyle = "#6e3e15";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // 2.) update all sprites from all layers

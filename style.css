@@ -2,19 +2,12 @@
 
 html, body {
     margin: 0;
-    overflow: hidden; /* Prevent scrollbars */
-    scale: 1;
-    background-color:black;
-    min-height: -webkit-fill-available;
-    --safe-area-inset-top: env(safe-area-inset-top);
-    --safe-area-inset-left: env(safe-area-inset-left);
-    --safe-area-inset-right: env(safe-area-inset-right);
-    --safe-area-inset-bottom: env(safe-area-inset-bottom);
-
+    padding: 0;
+    background-color: black;
+    overflow: hidden;
 }
 
 canvas {
-  scale: 1.25;
   image-rendering: optimizeSpeed;             /* Older versions of FF */
   image-rendering: -moz-crisp-edges;          /* FF 6.0+ */
   image-rendering: -webkit-optimize-contrast; /* Webkit (non standard naming) */
@@ -24,27 +17,3 @@ canvas {
   image-rendering: pixelated;
   -ms-interpolation-mode: nearest-neighbor; 
 }
-
-
-.fixed-center {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-@media (max-width: 459px), (max-height: 459px) {
-  html, body {
-    background-color: #90956c;
-  }
-  canvas {  
-    scale: 1;
-  }
-}
-
-@media (min-width: 1940px) {
-  canvas {  
-    scale: 1.75;
-  }
-}
-
