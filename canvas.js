@@ -105,38 +105,26 @@ addEventListener("wheel", (event) => {
     targetScrollPosition += 0.001 * event.deltaY;
     if (targetScrollPosition >= 1.1) {
         targetScrollPosition = 1.1;
-    } else if (targetScrollPosition <= -1.1) {
-        targetScrollPosition = -1.1;
+    } else if (targetScrollPosition <= -.2) {
+        targetScrollPosition = -.2;
     }
 });
 
 function updateScroll() { // For an efficiency gain, convert this to a polynomial
     if (isTransitioning) {
         switch(transitioningTo) {
-            case 0: // transition to zero state
-                if (currScrollPosition > 0) { // handle moving from 1 to 0
-                    currScrollPosition -= 0.02 * Math.sin((currScrollPosition - 0.3) * 2 * Math.PI ) + 0.02;
-                } else  { // handle moving from -1 to 0
-                    currScrollPosition += 0.02 * Math.sin((currScrollPosition - 0.2) * 2 * Math.PI ) + 0.02;
-                }
-                if ((currScrollPosition < .2)||(currScrollPosition > 0)) {
+            case 0:
+                currScrollPosition -= 0.02 * Math.sin((currScrollPosition - 0.30) * 2 * Math.PI ) + 0.02;
+                if (currScrollPosition < .2) {
                     targetScrollPosition = .1;
                     isTransitioning = false;
                     transitioningTo=null;
                 } 
                 break;
-            case 1: // transition from postcards >> zero state
-                currScrollPosition += 0.02 * Math.sin((currScrollPosition - 0.2) * 2 * Math.PI ) + 0.02;
-                if (currScrollPosition > .8) {
+            case 1:
+                currScrollPosition += 0.02 * Math.sin((currScrollPosition - 0.20) * 2 * Math.PI ) + 0.02;
+                if (currScrollPosition > .80) {
                     targetScrollPosition = .9;
-                    isTransitioning = false;
-                    transitioningTo=null;
-                }
-                break;
-            case -1: // transition from zero state >> game
-                currScrollPosition -= 0.02 * Math.sin((currScrollPosition - 0.3) * 2 * Math.PI ) + 0.02;
-                if (currScrollPosition < -.8) {
-                    targetScrollPosition = -.9;
                     isTransitioning = false;
                     transitioningTo=null;
                 }
@@ -145,9 +133,9 @@ function updateScroll() { // For an efficiency gain, convert this to a polynomia
     } else {
         targetScrollPosition += -0.01 * Math.sin((targetScrollPosition) * 2 * Math.PI ); // <- Derivative of the cos() that give us a good change in position
         currScrollPosition += 0.1 * (targetScrollPosition - currScrollPosition);
-        if (currScrollPosition <= -.95) {
-            window.location.href = "game.html";
-        }
+        //if (currScrollPosition <= -.95) {
+        //    window.location.href = "game.html";
+        //}
     }
 }
 
@@ -767,7 +755,7 @@ about.update = function () {
         this.opacity = 1;
     }
 }
-
+/*
 const play = new Sprite(null,LABELS_PATH,2,2,1);
 play.update = function () { 
     this.setCenter(centerX + 190,centerY + ((currScrollPosition + backgroundHoverOffset) * 800) + 190)
@@ -783,17 +771,13 @@ play.update = function () {
     } else {
         this.opacity = 1;
     }
-}
-
+*/
 // POST CARDS
 const postcards = new CardStack(POSTCARD_PATH_PREFIX);
 // Transition Setup
 addEventListener("click",(event) => {
     let [x,y] = webpageCoordToCanvasCoord(event.x,event.y);
-    if (((play.curr_frame===1) || (y > play.y - 20 && y < play.y + 100)) && !isTransitioning && targetScrollPosition < 0.01 && targetScrollPosition > -0.01) {
-        transitioningTo=-1;
-        isTransitioning=true; 
-    } else if (((about.curr_frame===1) || (y > about.y - 120 && y < about.y + 80)) && !isTransitioning && targetScrollPosition < 0.01 && targetScrollPosition > -0.01) {
+    if (((about.curr_frame===1) || (y > about.y - 120 && y < about.y + 80)) && !isTransitioning && targetScrollPosition < 0.01 && targetScrollPosition > -0.01) {
         transitioningTo=1;
         isTransitioning=true;
     } else if (((postcards.x > x) || (postcards.y > y) || (postcards.y + postcards.height < y) || 
@@ -813,7 +797,7 @@ windowPane.update = function () { this.setCenter(centerX,centerY)};
 // List of all sprites
 const background = [mountains,about];
 const midground = [postcards];
-const foreground = [pines,play];
+const foreground = [pines];
 const layers = [];
 if (mobile) {
     layers.push([windowPane,mobileMessage]);
