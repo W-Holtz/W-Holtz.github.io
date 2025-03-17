@@ -1,7 +1,8 @@
 // #region - Constants
 const MAX_FRAMES = 1000
-const MIN_VIEW_SIZE = 800
+const MIN_VIEW_WIDTH = 800
 const MIN_VIEW_HEIGTH = 600
+const MIN_VIEW_W_H_RATIO = MIN_VIEW_HEIGTH/MIN_VIEW_HEIGTH
 // MOBILE MESSAGE
 const MOBILE_MESSAGE = './mobileWarning.png';
 const WINDOW = './window.png';
@@ -53,11 +54,11 @@ the viewport.
 function resizeCanvas() {
     widthToHeightRatio=(window.innerWidth)/window.innerHeight
 
-    if (widthToHeightRatio< 1.333333333) {
+    if (widthToHeightRatio<MIN_VIEW_W_H_RATIO) {
         document.querySelector('canvas').style.width = '101dvw';
         document.querySelector('canvas').style.height = '100%';
-        canvas.width = MIN_VIEW_SIZE;
-        canvas.height=MIN_VIEW_SIZE/widthToHeightRatio;
+        canvas.width = MIN_VIEW_WIDTH;
+        canvas.height=MIN_VIEW_WIDTH/widthToHeightRatio;
     } else {
         document.querySelector('canvas').style.height = '101dvh';
         document.querySelector('canvas').style.width = '100%';
@@ -104,26 +105,38 @@ addEventListener("wheel", (event) => {
     targetScrollPosition += 0.001 * event.deltaY;
     if (targetScrollPosition >= 1.1) {
         targetScrollPosition = 1.1;
-    } else if (targetScrollPosition <= -.2) {
-        targetScrollPosition = -.2;
+    } else if (targetScrollPosition <= -1.1) {
+        targetScrollPosition = -1.1;
     }
 });
 
 function updateScroll() { // For an efficiency gain, convert this to a polynomial
     if (isTransitioning) {
         switch(transitioningTo) {
-            case 0:
-                currScrollPosition -= 0.02 * Math.sin((currScrollPosition - 0.30) * 2 * Math.PI ) + 0.02;
-                if (currScrollPosition < .2) {
+            case 0: // transition to zero state
+                if (currScrollPosition > 0) { // handle moving from 1 to 0
+                    currScrollPosition -= 0.02 * Math.sin((currScrollPosition - 0.3) * 2 * Math.PI ) + 0.02;
+                } else  { // handle moving from -1 to 0
+                    currScrollPosition += 0.02 * Math.sin((currScrollPosition - 0.2) * 2 * Math.PI ) + 0.02;
+                }
+                if ((currScrollPosition < .2)||(currScrollPosition > 0)) {
                     targetScrollPosition = .1;
+                    isTransitioning = false;
+                    transitioningTo=null;
+                } 
+                break;
+            case 1: // transition from postcards >> zero state
+                currScrollPosition += 0.02 * Math.sin((currScrollPosition - 0.2) * 2 * Math.PI ) + 0.02;
+                if (currScrollPosition > .8) {
+                    targetScrollPosition = .9;
                     isTransitioning = false;
                     transitioningTo=null;
                 }
                 break;
-            case 1:
-                currScrollPosition += 0.02 * Math.sin((currScrollPosition - 0.20) * 2 * Math.PI ) + 0.02;
-                if (currScrollPosition > .80) {
-                    targetScrollPosition = .9;
+            case -1: // transition from zero state >> game
+                currScrollPosition -= 0.02 * Math.sin((currScrollPosition - 0.3) * 2 * Math.PI ) + 0.02;
+                if (currScrollPosition < -.8) {
+                    targetScrollPosition = -.9;
                     isTransitioning = false;
                     transitioningTo=null;
                 }
@@ -132,9 +145,9 @@ function updateScroll() { // For an efficiency gain, convert this to a polynomia
     } else {
         targetScrollPosition += -0.01 * Math.sin((targetScrollPosition) * 2 * Math.PI ); // <- Derivative of the cos() that give us a good change in position
         currScrollPosition += 0.1 * (targetScrollPosition - currScrollPosition);
-        //if (currScrollPosition <= -.95) {
-        //    window.location.href = "game.html";
-        //}
+        if (currScrollPosition <= -.95) {
+            window.location.href = "game.html";
+        }
     }
 }
 
@@ -320,7 +333,9 @@ class Stamp extends Sprite {
     //   - listen for mouse down
     initializeEventListeners() {
         let handleClick = (event) => {
-            if (this.curr_frame===1) {
+            let [x,y] = webpageCoordToCanvasCoord(event.x,event.y);
+            if ((this.curr_frame === 1) || ((-this.width/2 < -this.x + x) && (-this.x + x < this.width/2) && 
+            (-this.height/2 < -this.y + y) && (-this.y + y < this.height/2 ))) {
                 switch(this.curr_skin) {
                     case 0:
                         window.location.href = "https://open.spotify.com/user/williamholtz?fo=1&a="; 
@@ -337,7 +352,7 @@ class Stamp extends Sprite {
         };
 
         this.eventListeners.unshift(["click",(event) => { 
-            handleClick()
+            handleClick(event)
         }]);
 
         addEventListener(this.eventListeners[0][0], this.eventListeners[0][1]);
@@ -352,8 +367,8 @@ class Stamp extends Sprite {
 
     update() {
         // We want to confirm that the converted X and Y click difference is not outside the width (x and y here are center)
-        if (this.isEnabled && (-this.width/2 < (-this.x + canvasMouseX) && (-this.x + canvasMouseX) < this.width/2 && 
-            -this.height/2 < (-this.y + canvasMouseY) && (-this.y + canvasMouseY) < this.height/2 )) 
+        if (this.isEnabled && ((-this.width/2 < -this.x + canvasMouseX)) && (-this.x + canvasMouseX < this.width/2) && 
+            (-this.height/2 < -this.y + canvasMouseY) && (-this.y + canvasMouseY < this.height/2)) 
         {
             this.curr_frame=1;
         } else {
@@ -739,7 +754,7 @@ const about = new Sprite(null,LABELS_PATH,2,2,0);
 about.update = function () { 
     this.setCenter(centerX + 180,centerY - ((currScrollPosition + backgroundHoverOffset) * 1000) + 90)
     // We want to confirm that the converted X and Y click difference is not outside the width (x and y here are center)
-    if (canvasMouseY > this.y - 120 && canvasMouseY < this.y + 100) 
+    if (canvasMouseY > this.y - 120 && canvasMouseY < this.y + 80) 
     {
         this.curr_frame=1;
     } else {
@@ -752,27 +767,37 @@ about.update = function () {
         this.opacity = 1;
     }
 }
-/*
+
 const play = new Sprite(null,LABELS_PATH,2,2,1);
 play.update = function () { 
     this.setCenter(centerX + 190,centerY + ((currScrollPosition + backgroundHoverOffset) * 800) + 190)
-    if (canvasMouseY > 518) 
+    if (canvasMouseY > this.y - 20 && canvasMouseY < this.y + 100) 
     {
         this.curr_frame=1;
     } else {
         this.curr_frame=0;
     }
+    if (currScrollPosition >= .8) { 
+        this.opacity = 5 - (5 * currScrollPosition)
+        if (currScrollPosition >= 1) {this.opacity = 0;}
+    } else {
+        this.opacity = 1;
+    }
 }
-*/
+
 // POST CARDS
 const postcards = new CardStack(POSTCARD_PATH_PREFIX);
 // Transition Setup
 addEventListener("click",(event) => {
-    if (about.curr_frame===1 && !isTransitioning && targetScrollPosition < 0.01 && targetScrollPosition > -0.01) {
+    let [x,y] = webpageCoordToCanvasCoord(event.x,event.y);
+    if (((play.curr_frame===1) || (y > play.y - 20 && y < play.y + 100)) && !isTransitioning && targetScrollPosition < 0.01 && targetScrollPosition > -0.01) {
+        transitioningTo=-1;
+        isTransitioning=true; 
+    } else if (((about.curr_frame===1) || (y > about.y - 120 && y < about.y + 80)) && !isTransitioning && targetScrollPosition < 0.01 && targetScrollPosition > -0.01) {
         transitioningTo=1;
         isTransitioning=true;
-    } else if (((postcards.x > canvasMouseX) || (postcards.y > canvasMouseY) || (postcards.y + postcards.height < canvasMouseY) || 
-    (postcards.x + postcards.width < canvasMouseX)) && !isTransitioning && currScrollPosition > 0.99 && currScrollPosition < 1.01) {
+    } else if (((postcards.x > x) || (postcards.y > y) || (postcards.y + postcards.height < y) || 
+    (postcards.x + postcards.width < x)) && !isTransitioning && currScrollPosition > 0.99 && currScrollPosition < 1.01) {
     transitioningTo=0;
     isTransitioning=true;
     }
@@ -788,7 +813,7 @@ windowPane.update = function () { this.setCenter(centerX,centerY)};
 // List of all sprites
 const background = [mountains,about];
 const midground = [postcards];
-const foreground = [pines];
+const foreground = [pines,play];
 const layers = [];
 if (mobile) {
     layers.push([windowPane,mobileMessage]);
