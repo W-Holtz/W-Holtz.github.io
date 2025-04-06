@@ -225,10 +225,6 @@ function webLoop() {
         }
     }
 
-
-    ctx.fillStyle = "#990099";
-        ctx.strokeRect(0, 0, MIN_VIEW_WIDTH, MIN_VIEW_WIDTH);
-
     if (done) { return; }
     // Loop
     requestAnimationFrame(webLoop);
