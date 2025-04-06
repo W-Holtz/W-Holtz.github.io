@@ -1,8 +1,8 @@
 // #region - Constants
 const MAX_FRAMES = 1000
 const MIN_VIEW_WIDTH = 800
-const MIN_VIEW_HEIGTH = 600
-const MIN_VIEW_W_H_RATIO = MIN_VIEW_HEIGTH/MIN_VIEW_HEIGTH
+const MIN_VIEW_HEIGHT = 600
+const MIN_VIEW_W_H_RATIO = MIN_VIEW_WIDTH/MIN_VIEW_HEIGHT
 // MOBILE MESSAGE
 const MOBILE_MESSAGE = './mobileWarning.png';
 const WINDOW = './window.png';
@@ -22,7 +22,7 @@ const POSTCARD_PATH = "./Postcards/October11.png";
 const POSTCARD_PATH_PREFIX = "./Postcards/";
 // POST STACK
 const POSTCARD_OVERLAP_OFFSET = 15;
-const POSTCARD_CARD_COUNT = 2;
+const POSTCARD_CARD_COUNT = 3;
 // STAMPS                                       TODO: Add stamp enum
 const STAMPS_PATH = "./stamps3.png";
 const STAMPS_FRAMES = 2;
@@ -62,8 +62,8 @@ function resizeCanvas() {
     } else {
         document.querySelector('canvas').style.height = '101dvh';
         document.querySelector('canvas').style.width = '100%';
-        canvas.height = MIN_VIEW_HEIGTH;
-        canvas.width=MIN_VIEW_HEIGTH*widthToHeightRatio;
+        canvas.height = MIN_VIEW_HEIGHT;
+        canvas.width=MIN_VIEW_HEIGHT*widthToHeightRatio;
     }
 }
 
@@ -77,9 +77,6 @@ ctx.webkitImageSmoothingEnabled = false;
 ctx.mozImageSmoothingEnabled = false;
 ctx.imageSmoothingEnabled = false;
 
-// Handle mobile vs desktop
-let scale = Number(canvasStyle.scale);
-const mobile = (canvasStyle.scale === "1") // assume mobile if the canvas start with this css scale
 // Update canvas dimensions
 resizeCanvas();
 
@@ -105,26 +102,38 @@ addEventListener("wheel", (event) => {
     targetScrollPosition += 0.001 * event.deltaY;
     if (targetScrollPosition >= 1.1) {
         targetScrollPosition = 1.1;
-    } else if (targetScrollPosition <= -.2) {
-        targetScrollPosition = -.2;
+    } else if (targetScrollPosition <= -1.1) {
+        targetScrollPosition = -1.1;
     }
 });
 
 function updateScroll() { // For an efficiency gain, convert this to a polynomial
     if (isTransitioning) {
         switch(transitioningTo) {
-            case 0:
-                currScrollPosition -= 0.02 * Math.sin((currScrollPosition - 0.30) * 2 * Math.PI ) + 0.02;
-                if (currScrollPosition < .2) {
+            case 0: // transition to zero state
+                if (currScrollPosition > 0) { // handle moving from 1 to 0
+                    currScrollPosition -= 0.02 * Math.sin((currScrollPosition - 0.3) * 2 * Math.PI ) + 0.02;
+                } else  { // handle moving from -1 to 0
+                    currScrollPosition += 0.02 * Math.sin((currScrollPosition - 0.2) * 2 * Math.PI ) + 0.02;
+                }
+                if ((currScrollPosition < .2)||(currScrollPosition > 0)) {
                     targetScrollPosition = .1;
                     isTransitioning = false;
                     transitioningTo=null;
                 } 
                 break;
-            case 1:
-                currScrollPosition += 0.02 * Math.sin((currScrollPosition - 0.20) * 2 * Math.PI ) + 0.02;
-                if (currScrollPosition > .80) {
+            case 1: // transition from postcards >> zero state
+                currScrollPosition += 0.02 * Math.sin((currScrollPosition - 0.2) * 2 * Math.PI ) + 0.02;
+                if (currScrollPosition > .8) {
                     targetScrollPosition = .9;
+                    isTransitioning = false;
+                    transitioningTo=null;
+                }
+                break;
+            case -1: // transition from zero state >> game
+                currScrollPosition -= 0.02 * Math.sin((currScrollPosition - 0.3) * 2 * Math.PI ) + 0.02;
+                if (currScrollPosition < -.8) {
+                    targetScrollPosition = -.9;
                     isTransitioning = false;
                     transitioningTo=null;
                 }
@@ -133,9 +142,9 @@ function updateScroll() { // For an efficiency gain, convert this to a polynomia
     } else {
         targetScrollPosition += -0.01 * Math.sin((targetScrollPosition) * 2 * Math.PI ); // <- Derivative of the cos() that give us a good change in position
         currScrollPosition += 0.1 * (targetScrollPosition - currScrollPosition);
-        //if (currScrollPosition <= -.95) {
-        //    window.location.href = "game.html";
-        //}
+        if (currScrollPosition <= -.95) {
+            window.location.href = "gameV1/game.html";
+        }
     }
 }
 
@@ -458,16 +467,17 @@ class Postcard extends Sprite {
 class CardStack extends Sprite{
 
     constructor(folderPath) { // TODO : Add loading and unloading code to manage the number of sprites being drawn
-        super(null, folderPath+"October11.png")
+        super(null, folderPath+"AboutMe.png")
 
         this.postcards = [];
         this.imageList = [];
         this.depthOffsets = [];
         this.topCardHoverOffset = 0;
 
-        this.imageList = [folderPath+"AboutMe.png",folderPath+"October11.png", folderPath+"AboutMe.png",folderPath+"October11.png"];
-        for (var index=0; index<POSTCARD_CARD_COUNT; index++) {
-            this.loadNextPostcard(true)
+        this.imageList = [folderPath+"AboutMe.png",folderPath+"March29.png",folderPath+"February9.png",folderPath+"October11.png"];
+        for (var index=0; index<POSTCARD_CARD_COUNT; index++) { // for the initial load, we just want to load in the top POSTCARD_CARD_COUNT
+            this.postcards.push(new Postcard(this.imageList[index]))
+            this.depthOffsets.push(-POSTCARD_OVERLAP_OFFSET);
         }
         this.postcards[0].enable()
         
@@ -755,7 +765,7 @@ about.update = function () {
         this.opacity = 1;
     }
 }
-/*
+
 const play = new Sprite(null,LABELS_PATH,2,2,1);
 play.update = function () { 
     this.setCenter(centerX + 190,centerY + ((currScrollPosition + backgroundHoverOffset) * 800) + 190)
@@ -771,13 +781,17 @@ play.update = function () {
     } else {
         this.opacity = 1;
     }
-*/
+}
+
 // POST CARDS
 const postcards = new CardStack(POSTCARD_PATH_PREFIX);
 // Transition Setup
 addEventListener("click",(event) => {
     let [x,y] = webpageCoordToCanvasCoord(event.x,event.y);
-    if (((about.curr_frame===1) || (y > about.y - 120 && y < about.y + 80)) && !isTransitioning && targetScrollPosition < 0.01 && targetScrollPosition > -0.01) {
+    if (((play.curr_frame===1) || (y > play.y - 20 && y < play.y + 100)) && !isTransitioning && targetScrollPosition < 0.01 && targetScrollPosition > -0.01) {
+        transitioningTo=-1;
+        isTransitioning=true; 
+    } else if (((about.curr_frame===1) || (y > about.y - 120 && y < about.y + 80)) && !isTransitioning && targetScrollPosition < 0.01 && targetScrollPosition > -0.01) {
         transitioningTo=1;
         isTransitioning=true;
     } else if (((postcards.x > x) || (postcards.y > y) || (postcards.y + postcards.height < y) || 
@@ -787,19 +801,21 @@ addEventListener("click",(event) => {
     }
 });
 
-
+/*
 // MOBILE ONLY
 const mobileMessage = new ScaledImage(MOBILE_MESSAGE,1,0);
 mobileMessage.update = function () { this.setCenter(centerX,centerY)};
 const windowPane = new ScaledImage(WINDOW,1,1);
 windowPane.update = function () { this.setCenter(centerX,centerY)};
+*/
 
 // List of all sprites
 const background = [mountains,about];
 const midground = [postcards];
-const foreground = [pines];
+const foreground = [pines,play];
 const layers = [];
-if (mobile) {
+/*
+if (false) {
     layers.push([windowPane,mobileMessage]);
     mobileMessage.setCenter(centerX,centerY);
     windowPane.setCenter(centerX,centerY);
@@ -823,9 +839,9 @@ if (mobile) {
         }
     }, {once : true});
 
-} else {
+} else {*/
     layers.push(background, midground, foreground);
-}
+//}
 // #endregion - Object Instantiation
 
 

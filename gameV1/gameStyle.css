@@ -1,0 +1,26 @@
+body {
+    margin: 0;
+    overflow: hidden; /* Prevent scrollbars */
+    scale: 1;
+    background-color: black;
+}
+
+canvas {
+  scale: 1;
+  image-rendering: optimizeSpeed;             /* Older versions of FF */
+  image-rendering: -moz-crisp-edges;          /* FF 6.0+ */
+  image-rendering: -webkit-optimize-contrast; /* Webkit (non standard naming) */
+  image-rendering: -o-crisp-edges;            /* OS X & Windows Opera (12.02+) */
+  image-rendering: crisp-edges;               /* Possible future browsers. */
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  -ms-interpolation-mode: nearest-neighbor; 
+}
+
+.fixed-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
