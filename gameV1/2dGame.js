@@ -170,7 +170,7 @@ class Sprite {
 
 // #region - Object Instantiation
 
-const tree = new Sprite(null,'./assets/pine.png');
+const tree = new Sprite(null,'./assets/Pine.png');
 tree.update = function (ctx) {
     this.setCenter(ctx.centerX - 20, ctx.centerY);
 }
