@@ -113,8 +113,12 @@ function updateScroll() { // For an efficiency gain, convert this to a polynomia
             case 0: // transition to zero state
                 if (currScrollPosition > 0) { // handle moving from 1 to 0
                     currScrollPosition -= 0.02 * Math.sin((currScrollPosition - 0.3) * 2 * Math.PI ) + 0.02;
-                } else  { // handle moving from -1 to 0
-                    currScrollPosition += 0.02 * Math.sin((currScrollPosition - 0.2) * 2 * Math.PI ) + 0.02;
+                } else  { // handle moving from -2 to 0
+                    if (currScrollPosition < -1) { // -2 to -1
+                        currScrollPosition += .04
+                    } else { // -1 to 0
+                        currScrollPosition += 0.02 * Math.sin((currScrollPosition - 0.2) * 2 * Math.PI ) + 0.02;
+                    }
                 }
                 if ((currScrollPosition < .2)||(currScrollPosition > 0)) {
                     targetScrollPosition = .1;
@@ -132,19 +136,27 @@ function updateScroll() { // For an efficiency gain, convert this to a polynomia
                 break;
             case -1: // transition from zero state >> game
                 currScrollPosition -= 0.02 * Math.sin((currScrollPosition - 0.3) * 2 * Math.PI ) + 0.02;
-                if (currScrollPosition < -.8) {
+                if (currScrollPosition < -.45) {
+                    currScrollPosition += -.04; // <- Derivative of the cos() that give us a good change in position
+                }
+                if (currScrollPosition < -1.5) {
                     targetScrollPosition = -.9;
                     isTransitioning = false;
                     transitioningTo=null;
                 }
                 break;
         }
+    } else if (currScrollPosition < -.45) {
+        targetScrollPosition += -.05; // <- Derivative of the cos() that give us a good change in position
+        currScrollPosition += 0.1 * (targetScrollPosition - currScrollPosition);
+        if (currScrollPosition <= -2) {
+            window.location.href = "gameV1/game.html";
+            isTransitioning = true;
+            transitioningTo=0;
+        }
     } else {
         targetScrollPosition += -0.01 * Math.sin((targetScrollPosition) * 2 * Math.PI ); // <- Derivative of the cos() that give us a good change in position
         currScrollPosition += 0.1 * (targetScrollPosition - currScrollPosition);
-        if (currScrollPosition <= -.95) {
-            window.location.href = "gameV1/game.html";
-        }
     }
 }
 
@@ -884,8 +896,6 @@ function webLoop() {
             sprite.draw(ctx);
         }
     }
-    //ctx.fillStyle = "#000000";
-    //ctx.fillText(centerX +" "+ centerY,200,200)
 
     if (done) { return; }
     // Loop

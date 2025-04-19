@@ -215,12 +215,10 @@ function webLoop() {
 
     // 4.) hard coded fade-in
     if (fadeIn) {
-        if (ctx.frame > 10) {
-            ctx.globalAlpha = (40-ctx.frame)/30;
-        }
+        ctx.globalAlpha = (30-ctx.frame)/30;
         ctx.fillStyle = "#000000";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        if (ctx.frame >= 40) {
+        ctx.fillRect(-10, -10, canvas.width + 10, canvas.height + 10);
+        if (ctx.frame >= 30) {
             fadeIn = false;
         }
     }
