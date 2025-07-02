@@ -71,6 +71,15 @@ window.addEventListener("resize", resizeCanvas);
 window.addEventListener("orientationchange", resizeCanvas);
 document.addEventListener("wheel", (event) => event.preventDefault(), { passive: false });
 document.addEventListener("touchmove", (event) => event.preventDefault(), { passive: false });
+window.addEventListener('pageshow', function(event) {
+    // Check if the page is being shown from the browser's history cache (e.g., back/forward button)
+    if (event.persisted) {
+        doDraw = true;
+    } else {
+        // Actions to perform on initial page load or non-cached navigation
+        console.log('Page loaded normally or from a fresh navigation.');
+    }
+});
 
 // Update the canvas context to support pixel drawing
 ctx.webkitImageSmoothingEnabled = false;
@@ -95,8 +104,9 @@ let targetScrollPosition = 0;
 let currScrollPosition = targetScrollPosition;
 let backgroundHoverOffset = 0;
 let scrollMomentum = 0; 
-let isTransitioning=false;
-let transitioningTo=null;
+let isTransitioning = false;
+let transitioningTo = null;
+let doDraw = true;
 addEventListener("wheel", (event) => {
     if (isTransitioning) { return; } // ignore scrolling if we are doing a click/tab based transistion
     targetScrollPosition += 0.001 * event.deltaY;
@@ -140,9 +150,13 @@ function updateScroll() { // For an efficiency gain, convert this to a polynomia
                     currScrollPosition += -.04; // <- Derivative of the cos() that give us a good change in position
                 }
                 if (currScrollPosition < -1.5) {
+                    window.location.href = "gameV1/game.html";
+                    doDraw = false;
                     targetScrollPosition = -.9;
-                    isTransitioning = false;
+                    currScrollPosition = 0;
+                    targetScrollPosition = 0;
                     transitioningTo=null;
+                    isTransitioning = false;
                 }
                 break;
         }
@@ -866,7 +880,7 @@ function webLoop() {
         frame++;
         if (frame > MAX_FRAMES) { frame = 0 }
     };
-    
+
     // Context updating
     resizeCanvas();
     centerX = ((canvas.width/2));
@@ -875,25 +889,25 @@ function webLoop() {
     // Scroll
     updateScroll();
 
-    // Drawing
-    // 1.) clear
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#6e3e15";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // 2.) update all sprites from all layers
-    
+    if (doDraw) {
+        // Drawing
+        // 1.) clear
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#6e3e15";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    for (const layer of layers) {
-        for (const sprite of layer) {
-            sprite.update();
+        // 2.) update all sprites from all layers
+        for (const layer of layers) {
+            for (const sprite of layer) {
+                sprite.update();
+            }
         }
-    }
-    
-    // 3.) draw all sprites from all layers
-    for (const layer of layers) {
-        for (const sprite of layer) {
-            sprite.draw(ctx);
+        
+        // 3.) draw all sprites from all layers
+        for (const layer of layers) {
+            for (const sprite of layer) {
+                sprite.draw(ctx);
+            }
         }
     }
 
