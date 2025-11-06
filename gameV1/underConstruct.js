@@ -1,6 +1,6 @@
 // #region - Constants
 
-const FRAME_STAGGER = 3;
+const FRAME_STAGGER = 6;
 const MAX_FRAMES = 1000;
 const MIN_VIEW_WIDTH = 200
 const MIN_VIEW_HEIGHT = 150
@@ -15,6 +15,7 @@ let canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
 let done=false;
 let fadeIn=true;
+let widthToHeightRatio;
 
 // #endregion - Globals
 
@@ -80,6 +81,9 @@ function resizeCanvas() {
     ctx.centerY = ((canvas.height/2));
 }
 
+// Mouse Position Setup
+let canvasMouseX = 0;
+let canvasMouseY = 0;
 function mouseMovementHandler(event) {
     [canvasMouseX,canvasMouseY] = webpageCoordToCanvasCoord(event.x,event.y)
 }
@@ -172,16 +176,31 @@ class Sprite {
 
 const tree = new Sprite(null,'./assets/Pine.png');
 tree.update = function (ctx) {
-    this.setCenter(ctx.centerX - 20, ctx.centerY);
+    this.setCenter(ctx.centerX - 20, ctx.centerY - 10);
 }
 const text = new Sprite(null,'./assets/ConstructionAllText.png');
 text.update = function (ctx) {
-    this.setCenter(ctx.centerX + 20, ctx.centerY + 42);
-
+    this.setCenter(ctx.centerX + 20, ctx.centerY + 32);
 }
+const backButton = new Sprite(null,'./assets/goBackLabel.png',11);
+backButton.update = function (ctx) {
+    this.setCenter(ctx.centerX - 3, canvas.height - 9);
+    if (ctx.tick % FRAME_STAGGER !== 0) { return; };
+    if ( canvasMouseX > this.x && canvasMouseX < this.x + this.width && canvasMouseY > this.y && canvasMouseY < this.y + this.height) 
+    {
+        this.incrementFrame()
+    } else {
+        this.curr_frame=8;
+    }
+}
+addEventListener("click",(event) => {
+    if (canvasMouseX > backButton.x && canvasMouseX < backButton.x + backButton.width && canvasMouseY > backButton.y && canvasMouseY < backButton.y + backButton.height) {
+        window.location.assign("/");
+    }
+});
 
 // List of all sprites
-const sprites = [tree,text]
+const sprites = [tree,text,backButton]
 const layers = [sprites];
 
 // #endregion - Object Instantiation
@@ -215,10 +234,10 @@ function webLoop() {
 
     // 4.) hard coded fade-in
     if (fadeIn) {
-        ctx.globalAlpha = (30-ctx.frame)/30;
+        ctx.globalAlpha = (90-ctx.tick)/90;
         ctx.fillStyle = "#000000";
         ctx.fillRect(-10, -10, canvas.width + 10, canvas.height + 10);
-        if (ctx.frame >= 30) {
+        if (ctx.tick >= 90) {
             fadeIn = false;
         }
     }

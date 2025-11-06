@@ -1,32 +1,51 @@
+/* 
+ *                                       ~ A PREFACE ~
+ * Welcome to my first project in javascript. Does this code look like a mess? Is it hard to
+ * interpret because of magic numbers and no file structure? Absolutely. This file was created
+ * as a light-weight solution to creating a landing page for my website. I wanted to dip my 
+ * toes into the web programming waters before embarking on a much large and and well organized
+ * project.
+ * 
+ * Read on if you dare, but know that this code was written with a flagrant disregard for proper
+ * code style and maintainability. Hopefully, my other game code files do not similarly
+ * dissapoint.
+ */
+
 // #region - Constants
-const MAX_FRAMES = 1000
-const MIN_VIEW_WIDTH = 800
-const MIN_VIEW_HEIGHT = 600
-const MIN_VIEW_W_H_RATIO = MIN_VIEW_WIDTH/MIN_VIEW_HEIGHT
+const MAX_FRAMES = 1000;
+const MIN_VIEW_WIDTH = 800;
+const MIN_VIEW_HEIGHT = 600;
+const MIN_VIEW_W_H_RATIO = MIN_VIEW_WIDTH/MIN_VIEW_HEIGHT;
 // MOBILE MESSAGE
 const MOBILE_MESSAGE = './mobileWarning.png';
 const WINDOW = './window.png';
 // MOUNTAINS
 const MOUNTAINS_PATH = './mountains3.png';
 // PINES
-const PINES_PATH = './LongPines.png'; // add 500 to base for long pines
+const PINES_PATH = './LongPines.png'; 
 // SCROLL INDICATOR
 const SCROLL_PATH = "./scrollDown3.png";
 const SCROLL_FRAMES = 23;
 // LABELS
 const ABOUT_PATH = './AboutMenuLabel.png';
-const PLAY_PATH = './PlayMenuLabel.png'
-const LABELS_PATH = './MenuLabels.png'
+const PLAY_PATH = './PlayMenuLabel.png';
+const LABELS_PATH = './MenuLabels.png';
+const X_PATH = './xIcon.png';
 // POST CARD
 const POSTCARD_PATH = "./Postcards/October11.png";
 const POSTCARD_PATH_PREFIX = "./Postcards/";
+const INITIAL_POSTCARD_PATH = POSTCARD_PATH_PREFIX+"AboutMe.png";
 // POST STACK
 const POSTCARD_OVERLAP_OFFSET = 15;
 const POSTCARD_CARD_COUNT = 3;
-// STAMPS                                       TODO: Add stamp enum
+// STAMPS                                     
 const STAMPS_PATH = "./stamps3.png";
 const STAMPS_FRAMES = 2;
-const STAMPS_SKINS = 3;
+const STAMPS_SKINS = 4;
+const RETURN_TO_SENDER_PATH = "./ReturnToSender.png";
+const NEWSLETTER_SUBJECT = encodeURIComponent("Sign me up!");
+const NEWSLETTER_BODY = encodeURIComponent("Hello, I'd like to sign up for your newsletter!");
+const CONTACT_EMAIL = "willholtz2001@gmail.com";
 // #endregion - Constants
 
 // #region - Context/canvas setup
@@ -34,7 +53,8 @@ const STAMPS_SKINS = 3;
 let canvas = document.querySelector('canvas');
 let canvasStyle = window.getComputedStyle(canvas);
 const ctx = canvas.getContext('2d');
-let widthToHeightRatio=1
+let widthToHeightRatio=1;
+let isShielded = false;
 
 
 /* 
@@ -47,7 +67,6 @@ if the scale is applied this way, then the canvas simply refuses to have its hei
 Once we are in JS land, it seems like the scale affects the height and width directly, whereas if we
 scal ahead of time in the css file, the height and width set by JS are equal to height and width of
 the viewport.
-
 
 */
 
@@ -75,9 +94,6 @@ window.addEventListener('pageshow', function(event) {
     // Check if the page is being shown from the browser's history cache (e.g., back/forward button)
     if (event.persisted) {
         doDraw = true;
-    } else {
-        // Actions to perform on initial page load or non-cached navigation
-        console.log('Page loaded normally or from a fresh navigation.');
     }
 });
 
@@ -103,7 +119,6 @@ let centerY = ((canvas.height/2));
 let targetScrollPosition = 0;
 let currScrollPosition = targetScrollPosition;
 let backgroundHoverOffset = 0;
-let scrollMomentum = 0; 
 let isTransitioning = false;
 let transitioningTo = null;
 let doDraw = true;
@@ -150,23 +165,16 @@ function updateScroll() { // For an efficiency gain, convert this to a polynomia
                     currScrollPosition += -.04; // <- Derivative of the cos() that give us a good change in position
                 }
                 if (currScrollPosition < -1.5) {
-                    window.location.href = "gameV1/game.html";
-                    doDraw = false;
-                    targetScrollPosition = -.9;
-                    currScrollPosition = 0;
-                    targetScrollPosition = 0;
-                    transitioningTo=null;
-                    isTransitioning = false;
+                    switchToGame();
                 }
                 break;
         }
     } else if (currScrollPosition < -.45) {
         targetScrollPosition += -.05; // <- Derivative of the cos() that give us a good change in position
         currScrollPosition += 0.1 * (targetScrollPosition - currScrollPosition);
-        if (currScrollPosition <= -2) {
-            window.location.href = "gameV1/game.html";
+        if (currScrollPosition < -1) {
+            transitioningTo = -1;
             isTransitioning = true;
-            transitioningTo=0;
         }
     } else {
         targetScrollPosition += -0.01 * Math.sin((targetScrollPosition) * 2 * Math.PI ); // <- Derivative of the cos() that give us a good change in position
@@ -174,31 +182,23 @@ function updateScroll() { // For an efficiency gain, convert this to a polynomia
     }
 }
 
+async function switchToGame() { 
+    window.location.href="gameV1/game.html"
+    doDraw = false;
+    targetScrollPosition = -.9;
+    currScrollPosition = 0;
+    targetScrollPosition = 0;
+    transitioningTo=null;
+    isTransitioning = false;
+}
+
 // Mouse Position Setup
 let canvasMouseX = 0;
 let canvasMouseY = 0;
 function mouseMovementHandler(event) {
-    [canvasMouseX,canvasMouseY] = webpageCoordToCanvasCoord(event.x,event.y)
+    [canvasMouseX,canvasMouseY] = webpageCoordToCanvasCoord(event.x,event.y);
 }
-
 document.addEventListener('mousemove', mouseMovementHandler);
-
-// I'm updating scrolling with the following goals in mind:
-//  1. Smooth
-//  2. Appropriate inertia
-//  3. Easier to program around
-//
-// - I could use an int from 1 -> 1000 or some arbirtrary number, 
-// - or I could use a float  0 -> 1
-// Float wins for smooth-ness
-// 
-// To make it smooth, I'll need a buffer, I can't just have input=change
-// - I could make positive scroll+=acceleration and use a physics model
-// - I could make the buffer a target, and handle the movement towards that target gradually
-//
-
-
-
 // #endregion - Context/canvas setup
 
 
@@ -341,14 +341,18 @@ class PineBorder extends ScaledImage {
 
 class Stamp extends Sprite {
 
-    constructor(spriteSheet, path, frames=1, skins=1, curr_skin=0, angle, postcardXOffset=682, postcardYOffset=110,isEnabled=false) {
+    constructor(spriteSheet, path, frames=1, skins=1, curr_skin=0, redirectLink, angle, postcardXOffset=682, postcardYOffset=110,isEnabled=false) {
         super(spriteSheet, path, frames, skins, curr_skin);
         this.angle = angle;
         this.isEnabled=isEnabled;
         this.eventListeners=[];
         this.postcardXOffset=postcardXOffset;
         this.postcardYOffset=postcardYOffset;
-        this.initializeEventListeners()
+        if (redirectLink === undefined) {
+            throw new Error('The "redirectLink" parameter is mandatory.');
+        }
+        this.redirectLink=redirectLink;
+        this.initializeEventListeners();
     }
 
     // Initializes the event listeners for the stamp:
@@ -357,24 +361,13 @@ class Stamp extends Sprite {
     initializeEventListeners() {
         let handleClick = (event) => {
             let [x,y] = webpageCoordToCanvasCoord(event.x,event.y);
-            if ((this.curr_frame === 1) || ((-this.width/2 < -this.x + x) && (-this.x + x < this.width/2) && 
-            (-this.height/2 < -this.y + y) && (-this.y + y < this.height/2 ))) {
-                switch(this.curr_skin) {
-                    case 0:
-                        window.location.href = "https://open.spotify.com/user/williamholtz?fo=1&a="; 
-                        break;
-                    case 1:
-                        window.location.href = "https://www.linkedin.com/in/william-holtz-ab8981123"; 
-                        break;
-                    case 2:
-                        window.location.href = "https://github.com/W-Holtz"; 
-                        break;
-                    default:
-                }
+            
+            if ((this.curr_frame === 1) ) {
+                window.location.href = this.redirectLink;
             }
         };
 
-        this.eventListeners.unshift(["click",(event) => { 
+        this.eventListeners.unshift(["mousedown",(event) => { 
             handleClick(event)
         }]);
 
@@ -429,17 +422,18 @@ class Stamp extends Sprite {
 
 class Postcard extends Sprite {
     
-    constructor(path) {
+    constructor(path,includeReturnToSender) {
         super(null,path);
         this.isEnabled=false;
         // Stamps
         this.stamps=[];
         this.stampsImg = createImageFromPath(STAMPS_PATH);
         this.stampsImg.onload = () => { 
-            this.addStamps();
+            this.addStamps(includeReturnToSender);
         };
+
         this.path=path;
-        this.status = 0; // TODO : Add an enum - 0 is stable, 1 is flying out, 2 in flying in, -1 is fading into the ether
+        this.status = 0;
     }
 
     unload() {
@@ -450,11 +444,21 @@ class Postcard extends Sprite {
         this.stampsImg=null;
     }
 
-    addStamps() {
-        this.spotify = new Stamp(this.stampsImg,null,2,3,0,Math.random()-0.75,580,100,this.isEnabled);
-        this.git = new Stamp(this.stampsImg,null,2,3,1,Math.random()-0.75,688,108,this.isEnabled);
-        this.linkedin = new Stamp(this.stampsImg,null,2,3,2,Math.random()-0.75,600,200,this.isEnabled);
-        this.stamps = [this.spotify,this.linkedin,this.git];
+    addStamps(includeReturnToSender) {
+        this.spotify = new Stamp(this.stampsImg,null,STAMPS_FRAMES,STAMPS_SKINS,0,"https://open.spotify.com/user/williamholtz?fo=1&a=",Math.random()-0.75,572,93,this.isEnabled);
+        this.git = new Stamp(this.stampsImg,null,STAMPS_FRAMES,STAMPS_SKINS,1,"https://github.com/W-Holtz",Math.random()-0.75,670,98,this.isEnabled);
+        this.linkedin = new Stamp(this.stampsImg,null,STAMPS_FRAMES,STAMPS_SKINS,2,"https://www.linkedin.com/in/william-holtz-ab8981123",Math.random()-0.75,605,175,this.isEnabled);
+        
+        this.newsletter = new Stamp(this.stampsImg,null,STAMPS_FRAMES,STAMPS_SKINS,3,`mailto:${CONTACT_EMAIL}?subject=${NEWSLETTER_SUBJECT}&body=${NEWSLETTER_BODY}`,Math.random()-0.75,700,180,this.isEnabled);
+        this.stamps = [this.spotify,this.linkedin,this.git,this.newsletter];
+
+        if (includeReturnToSender) {
+            this.returnToSenderImg = createImageFromPath(RETURN_TO_SENDER_PATH);
+            this.returnToSenderImg.onload = () => { 
+                this.returnToSender = new Stamp(this.returnToSenderImg,null,2,1,0,`mailto:${CONTACT_EMAIL}`,0,634,403,this.isEnabled);
+                this.stamps.push(this.returnToSender);
+            };
+        }
     }
 
     enable() {
@@ -500,9 +504,9 @@ class CardStack extends Sprite{
         this.depthOffsets = [];
         this.topCardHoverOffset = 0;
 
-        this.imageList = [folderPath+"AboutMe.png",folderPath+"March29.png",folderPath+"February9.png",folderPath+"October11.png"];
+        this.imageList = [INITIAL_POSTCARD_PATH,folderPath+"March29.png",folderPath+"February9.png",folderPath+"October11.png"];
         for (var index=0; index<POSTCARD_CARD_COUNT; index++) { // for the initial load, we just want to load in the top POSTCARD_CARD_COUNT
-            this.postcards.push(new Postcard(this.imageList[index]))
+            this.postcards.push(new Postcard(this.imageList[index], (this.imageList[index] === INITIAL_POSTCARD_PATH)))
             this.depthOffsets.push(-POSTCARD_OVERLAP_OFFSET);
         }
         this.postcards[0].enable()
@@ -514,12 +518,12 @@ class CardStack extends Sprite{
     loadNextPostcard(reverse=false) {
         if (reverse) {
             let path = this.imageList.pop();
-            this.postcards.unshift(new Postcard(path));
+            this.postcards.unshift(new Postcard(path, (path === INITIAL_POSTCARD_PATH)));
             this.depthOffsets.unshift(-POSTCARD_OVERLAP_OFFSET);
             this.imageList.unshift(path);
         } else {
             let path = this.imageList[POSTCARD_CARD_COUNT];
-            this.postcards.push(new Postcard(path));
+            this.postcards.push(new Postcard(path, (path === INITIAL_POSTCARD_PATH)));
             this.depthOffsets.push(2 * POSTCARD_OVERLAP_OFFSET);
             this.imageList.push(this.imageList.shift());
         }
@@ -636,28 +640,25 @@ class CardStack extends Sprite{
 
     */
     update() {
-        this.updateCardStackPosition()
-        // Standard behaviors
-        this.updatePostcardLocations()
-        // Outlier behaviors
-        this.handleMousePosition()
+        this.updateCardStackPosition();
+        this.updatePostcardLocations();
     }
 
     isMousingToPrevCard() {
         return (0 < (-this.x + canvasMouseX) && (-this.x + canvasMouseX) < this.width/2 && 
-            0 < (-this.y + canvasMouseY) && (-this.y + canvasMouseY) < this.height );
+                0 < (-this.y + canvasMouseY) && (-this.y + canvasMouseY) < this.height );
     }
 
     isMousingToNextCard() {
-        return (this.width > (-this.x + canvasMouseX) && (-this.x + canvasMouseX) > this.width/2 && 
-            0 < (-this.y + canvasMouseY) && (-this.y + canvasMouseY) < this.height );
+        return (this.width > (-this.x + canvasMouseX) && (-this.x + canvasMouseX) > this.width - 120 && 
+                200 < (-this.y + canvasMouseY) && (-this.y + canvasMouseY) < this.height );
     }
 
     handleMousePosition() {
         // 1.) Update hover based offset
         if (this.isMousingToNextCard() && this.postcards[0].status !== 2)
         {
-            if (this.topCardHoverOffset > .999) {
+            if (this.topCardHoverOffset > .998) {
                 this.topCardHoverOffset = .999;
             } else  {
                 this.topCardHoverOffset -= 0.25 * (this.topCardHoverOffset*this.topCardHoverOffset - this.topCardHoverOffset);
@@ -670,8 +671,7 @@ class CardStack extends Sprite{
             }
         }
         // 2.) Update top card position
-        this.postcards[0].x -= this.topCardHoverOffset*60;
-        this.postcards[0].updateStamps();
+        this.postcards[0].x -= this.topCardHoverOffset * POSTCARD_OVERLAP_OFFSET * 2;
     }
 
     updatePostcardLocations() {
@@ -712,6 +712,11 @@ class CardStack extends Sprite{
                     this.depthOffsets[index] += 2
                 }
             }
+
+            if (index === 0) {
+                this.handleMousePosition()
+            }
+
             card.update()
         }
 
@@ -778,7 +783,7 @@ const about = new Sprite(null,LABELS_PATH,2,2,0);
 about.update = function () { 
     this.setCenter(centerX + 180,centerY - ((currScrollPosition + backgroundHoverOffset) * 1000) + 90)
     // We want to confirm that the converted X and Y click difference is not outside the width (x and y here are center)
-    if (canvasMouseY > this.y - 120 && canvasMouseY < this.y + 80) 
+    if (canvasMouseY > this.y - 110 && canvasMouseY < this.y + 80) 
     {
         this.curr_frame=1;
     } else {
@@ -809,6 +814,16 @@ play.update = function () {
     }
 }
 
+const xIcon = new Sprite(null,X_PATH);
+xIcon.update = function () { 
+    this.setCenter(canvas.width - 30,30);
+    if (currScrollPosition > 0.2) {
+        this.opacity = currScrollPosition * 1.2;
+    } else {
+        this.opacity = 0;
+    }
+}
+
 // POST CARDS
 const postcards = new CardStack(POSTCARD_PATH_PREFIX);
 // Transition Setup
@@ -827,47 +842,13 @@ addEventListener("click",(event) => {
     }
 });
 
-/*
-// MOBILE ONLY
-const mobileMessage = new ScaledImage(MOBILE_MESSAGE,1,0);
-mobileMessage.update = function () { this.setCenter(centerX,centerY)};
-const windowPane = new ScaledImage(WINDOW,1,1);
-windowPane.update = function () { this.setCenter(centerX,centerY)};
-*/
-
 // List of all sprites
 const background = [mountains,about];
-const midground = [postcards];
+const midground = [postcards,xIcon];
 const foreground = [pines,play];
 const layers = [];
-/*
-if (false) {
-    layers.push([windowPane,mobileMessage]);
-    mobileMessage.setCenter(centerX,centerY);
-    windowPane.setCenter(centerX,centerY);
+layers.push(background, midground, foreground);
 
-    // Transition Setup
-    addEventListener("click",(event) => {
-        windowPane.update = function () { 
-            this.setCenter(centerX,centerY);
-            if (this.opacity === 0) {
-                if (mobileMessage.opactiy !== 1) {
-                    mobileMessage.opacity += .1;
-                    if (mobileMessage.opacity > 1) { 
-                        mobileMessage.opacity = 1;
-                    }
-                }
-            }
-            this.opacity -= 0.1;
-            if (this.opacity < 0) {
-                this.opacity = 0;
-            }
-        }
-    }, {once : true});
-
-} else {*/
-    layers.push(background, midground, foreground);
-//}
 // #endregion - Object Instantiation
 
 
@@ -922,49 +903,3 @@ function run() {
 }
 
 run();
-
-/*  --- SPRITE ---
-properties:
-    spritesheet
-    x
-    y
-    width
-    height
-    frame
-    skin
-
-functions:
-    new(image,frames,skins,x,y,path)
-    draw(ctx)
-    update(globalStateStuff)
-
-questions:
-    For a sprite that has duplicate spritesheets, how will I handle the storage of that sheet?
-     - Ideally, that object is loaded and stored once and the pointer is passed around. Those sheets are essentially static.
-    For a group of sprites that are really one object (stamps), should they be handled differently?
-     - I think it's not a terrible idea to instantiate and store them seperatley but ultimately, they should be places into the drawing list in the same way.
-    How should I handle draw order?
-     - For now (small scale) it'll be easy enough with a single layer. I can populate the sprite in order to the array.
-     - If I want to accomodate the handling of multiple layers to simplify things in the long run, I should support multiple layers.
-    What should be needed for the draw method?
-     - The inputs should be minimal. Ctx alone should be pretty much enough. I think sprites should handle their business
-    How am I doing to handle input management? (i.e. scrolls, taps, clicks)
-     - Brainstorming Options:
-     1.) I could assign handlers to each object that wants to listen
-     2.) I could handle inputs using a large case statment
-     3.) I could do a mix of both, 
-         3a.) handlers for inputs that aren't used by most objects
-         3b.) case statment used to update global values held as a system state
-    For a Postcard, how versatile should the stamp assigment be?
-     - For now, I'll hard code it. If I want to have a bunch of card moving forward, it'd be pretty slick to have an enum
-     that I can use to apply stamps in the costructor of the postcard.
-
-New UI planning:
- - Pressing buttons will prompt the user to click on either the mountains or the trees
- - Clicking the mountains > transition to postcard
- - Clicking the trees > transistion to game
- - Clicking on the postcard > switches between cards
- - Clicking outside of the postcard > switches back to home
- Dragging????
-
-*/
