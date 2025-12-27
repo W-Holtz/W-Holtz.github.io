@@ -1,0 +1,25 @@
+
+
+html, body {
+    margin: 0;
+    overflow: visible;
+
+
+}
+
+canvas {
+  background-color:red;
+
+
+}
+
+
+.fixed-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+
+

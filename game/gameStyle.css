@@ -1,11 +1,13 @@
-html, body {
+body {
     margin: 0;
-    padding: 0;
+    overflow: hidden; /* Prevent scrollbars */
+    scale: 1;
     background-color: black;
-    overflow: hidden;
 }
 
 canvas {
+  background-color: black;
+  scale: 1;
   image-rendering: optimizeSpeed;             /* Older versions of FF */
   image-rendering: -moz-crisp-edges;          /* FF 6.0+ */
   image-rendering: -webkit-optimize-contrast; /* Webkit (non standard naming) */
@@ -15,3 +17,11 @@ canvas {
   image-rendering: pixelated;
   -ms-interpolation-mode: nearest-neighbor; 
 }
+
+.fixed-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+

@@ -1,21 +1,23 @@
-import Segment from './segment.js'
+import Bend from './bend.js'
+
+
 
 class Road {
 
-    contructor(numberOfSegs) {
+    contructor() {
         this.segs = [];
         this.width = 10;
         this.color1 = '#8f8f8f8';
         this.color2 = '#9c9c9c9';
         let currColor = '';
-        let point = {
+        let pos = {
             x:0,
             y:0,
             z:0,
         }
         for (let segNum=0; segNum<numberOfSegs; segNum++) {
             currColor = (segNum % 2 === 0) ? this.color1 : this.color2;
-            this.segs.push(new Segment(p1,currColor,width));
+            this.segs.push(new Bend(p1,currColor,width));
         }
     }
 }

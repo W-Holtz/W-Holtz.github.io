@@ -17,32 +17,32 @@ const MIN_VIEW_WIDTH = 800;
 const MIN_VIEW_HEIGHT = 600;
 const MIN_VIEW_W_H_RATIO = MIN_VIEW_WIDTH/MIN_VIEW_HEIGHT;
 // MOBILE MESSAGE
-const MOBILE_MESSAGE = './mobileWarning.png';
-const WINDOW = './window.png';
+const MOBILE_MESSAGE = './assets/mobileWarning.png';
+const WINDOW = './assets/window.png';
 // MOUNTAINS
-const MOUNTAINS_PATH = './mountains3.png';
+const MOUNTAINS_PATH = './assets/mountains3.png';
 // PINES
-const PINES_PATH = './LongPines.png'; 
+const PINES_PATH = './assets/LongPines.png'; 
 // SCROLL INDICATOR
-const SCROLL_PATH = "./scrollDown3.png";
+const SCROLL_PATH = "./assets/scrollDown3.png";
 const SCROLL_FRAMES = 23;
 // LABELS
-const ABOUT_PATH = './AboutMenuLabel.png';
-const PLAY_PATH = './PlayMenuLabel.png';
-const LABELS_PATH = './MenuLabels.png';
-const X_PATH = './xIcon.png';
+const ABOUT_PATH = './assets/AboutMenuLabel.png';
+const PLAY_PATH = './assets/PlayMenuLabel.png';
+const LABELS_PATH = './assets/MenuLabels.png';
+const X_PATH = './assets/xIcon.png';
 // POST CARD
-const POSTCARD_PATH = "./Postcards/October11.png";
-const POSTCARD_PATH_PREFIX = "./Postcards/";
+const POSTCARD_PATH = "./assets/Postcards/October11.png";
+const POSTCARD_PATH_PREFIX = "./assets/Postcards/";
 const INITIAL_POSTCARD_PATH = POSTCARD_PATH_PREFIX+"AboutMe.png";
 // POST STACK
 const POSTCARD_OVERLAP_OFFSET = 15;
 const POSTCARD_CARD_COUNT = 3;
 // STAMPS                                     
-const STAMPS_PATH = "./stamps3.png";
+const STAMPS_PATH = "./assets/stamps3.png";
 const STAMPS_FRAMES = 2;
 const STAMPS_SKINS = 4;
-const RETURN_TO_SENDER_PATH = "./ReturnToSender.png";
+const RETURN_TO_SENDER_PATH = "./assets/ReturnToSender.png";
 const NEWSLETTER_SUBJECT = encodeURIComponent("Sign me up!");
 const NEWSLETTER_BODY = encodeURIComponent("Hello, I'd like to sign up for your newsletter!");
 const CONTACT_EMAIL = "willholtz2001@gmail.com";
@@ -60,13 +60,18 @@ let isShielded = false;
 /* 
 
 --- RESIZING ---
-This one has proven the most troublesome. I could easily resize the images that I draw, but then
-the quality is compromised. The only resize function that doesn't blur the images, is the CSS
-scale function. However, I run into issues when resizing dynamically via script. For some reason
-if the scale is applied this way, then the canvas simply refuses to have its heigh and width adjusted.
-Once we are in JS land, it seems like the scale affects the height and width directly, whereas if we
-scal ahead of time in the css file, the height and width set by JS are equal to height and width of
-the viewport.
+There are two "sizes" we need to worry about:
+  1.) The size of the canvas (scaling)
+  2.) The resolution/aspect ratio of the canvas
+
+The "style" (i.e canvas.style) of of the canvas element is actually the css and html rendering 
+tool used by the frontend to size the canvas element on the website. In other words, when we set 
+canvas.style, we are telling the browser how much space the canvas element should take up on the 
+page.
+
+The canvas.width and canvas.height are special attributes of canvas element to deterine the size
+of the canvas's draw buffer (the canvas's... canvas?). A similar idea would be the resolution of
+an image. These properties determine the number of pixels the canvas will store.
 
 */
 
@@ -74,13 +79,13 @@ function resizeCanvas() {
     widthToHeightRatio=(window.innerWidth)/window.innerHeight
 
     if (widthToHeightRatio<MIN_VIEW_W_H_RATIO) {
-        document.querySelector('canvas').style.width = '101dvw';
-        document.querySelector('canvas').style.height = '100%';
+        canvas.style.width = '101dvw';
+        canvas.style.height = '100%';
         canvas.width = MIN_VIEW_WIDTH;
         canvas.height=MIN_VIEW_WIDTH/widthToHeightRatio;
     } else {
-        document.querySelector('canvas').style.height = '101dvh';
-        document.querySelector('canvas').style.width = '100%';
+        canvas.style.height = '101dvh';
+        canvas.style.width = '100%';
         canvas.height = MIN_VIEW_HEIGHT;
         canvas.width=MIN_VIEW_HEIGHT*widthToHeightRatio;
     }
@@ -183,7 +188,7 @@ function updateScroll() { // For an efficiency gain, convert this to a polynomia
 }
 
 async function switchToGame() { 
-    window.location.href="gameV1/game.html"
+    window.location.href="game/game.html"
     doDraw = false;
     targetScrollPosition = -.9;
     currScrollPosition = 0;
