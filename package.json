@@ -1,0 +1,29 @@
+{
+  "name": "w-holtz.github.io",
+  "version": "1.0.0",
+  "description": "@Author William Leonard Holtz",
+  "main": "canvas.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/W-Holtz/W-Holtz.github.io"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "homepage": "https://github.com/W-Holtz/W-Holtz.github.io",
+  "dependencies": {
+    "@dimforge/rapier3d": "^0.19.3",
+    "graphicsjs": "^1.4.4",
+    "noisejs": "^2.1.0",
+    "three": "^0.182.0"
+  },
+  "devDependencies": {
+    "vite": "^7.3.0",
+    "vite-plugin-top-level-await": "^1.6.0",
+    "vite-plugin-wasm": "^3.5.0"
+  }
+}

@@ -1,18 +1,30 @@
 body {
     margin: 0;
-    overflow: hidden; /* Prevent scrollbars */
+    overflow: hidden;
     scale: 1;
     background-color: black;
+    opacity: 0; /* Start invisible */
+    animation: pageLoadFadeIn 1s linear forwards;
+}
+
+@keyframes pageLoadFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 canvas {
   background-color: black;
   scale: 1;
-  image-rendering: optimizeSpeed;             /* Older versions of FF */
-  image-rendering: -moz-crisp-edges;          /* FF 6.0+ */
-  image-rendering: -webkit-optimize-contrast; /* Webkit (non standard naming) */
-  image-rendering: -o-crisp-edges;            /* OS X & Windows Opera (12.02+) */
-  image-rendering: crisp-edges;               /* Possible future browsers. */
+  height: 101dvh;
+  image-rendering: optimizeSpeed;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: -o-crisp-edges;
+  image-rendering: crisp-edges;
   image-rendering: -webkit-crisp-edges;
   image-rendering: pixelated;
   -ms-interpolation-mode: nearest-neighbor; 
@@ -25,3 +37,162 @@ canvas {
   transform: translate(-50%, -50%);
 }
 
+#gameUI {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+#kmh {
+  left: 5px;
+  bottom: -10px;
+}
+
+#rpm {
+  right: 5px;
+  bottom: -10px;
+}
+
+.gauge {
+  position: absolute;
+  width: clamp(120px, 30vw, 330px);
+}
+
+.gauge .dial {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.gauge .needle {
+  width: clamp(120px, 30vw, 330px);
+  position: absolute;
+  left: 0;
+  bottom: 0;
+}
+
+/* Curtain (under construction) popup */
+#curtain {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #e1f2dd;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1002;
+    transition: opacity 2s linear;
+}
+
+#curtain.hidden {
+    display: none;
+}
+
+.popup-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+}
+
+.image-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 0;
+}
+
+#curtain .popup-content {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    width: min(800px, 35vw);
+    height: auto;
+    display: block;
+}
+
+.button-container {
+    display: flex;
+    gap: 3vw;
+    align-items: center; /* This centers the line vertically */
+}
+
+.vertical-line {
+    border-left: 0.3vw solid #000000;
+    height: 6vh; /* Use fixed height instead of percentage */
+}
+
+.popup-btn {
+    padding: 0;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    transition: all 0.2s;
+}
+
+.popup-btn img {
+    padding-top: 10px;
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    height: 3vw;
+}
+
+.popup-btn:hover {
+    transform: translateY(-2px);
+}
+
+.popup-btn:active {
+    transform: translateY(0);
+}
+
+/* Controls popup */
+#controls {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+#controls.hidden {
+    display: none;
+}
+
+#controls .popup-content {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    transform: scale(4);
+    display: block;
+}
+
+.fade-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1003;
+    transition: opacity 0.1s linear;
+}
+
+.fade-overlay.fade-in {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.fade-overlay.fade-out {
+    opacity: 0;
+}

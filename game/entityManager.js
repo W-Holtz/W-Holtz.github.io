@@ -2,6 +2,7 @@
 // but since js is so loosely typed, I don't want to waste time on handling it.
 const MOVEMENT_FUNC = 'updateMovement';
 const INPUT_FUNC = 'handleInputs';
+const PAUSED_INPUT_FUNC = 'handlePauseInputs'
 const WEATHER_FUNC = 'updateWeather';
 const PHYSICS_FUNC = 'updatePhysics';
 
@@ -13,12 +14,14 @@ class EntityManager {
 
         // systems
         this.inputEntities = [];
+        this.pauseInputEntities = []
         this.movementEntities = [];
         this.phsyicsEntities = [];
         this.systemMap = {
             [INPUT_FUNC]: this.inputEntities,
             [MOVEMENT_FUNC]: this.movementEntities,
             [PHYSICS_FUNC]: this.phsyicsEntities,
+            [PAUSED_INPUT_FUNC]: this.pauseInputEntities,
         }
 
         this.world = world;
@@ -33,6 +36,12 @@ class EntityManager {
             this.inputEntities[i].handleInputs(inputArr);
         }
     }
+
+    handlePauseInputs (inputArr) {
+        for (let i = 0; i < this.pauseInputEntities.length; i++) {
+            this.pauseInputEntities[i].handlePauseInputs(inputArr);
+        }
+    }
     
     updateMovement() {
         for (let i = 0; i < this.movementEntities.length; i++) {
@@ -41,7 +50,7 @@ class EntityManager {
     }
 
     updatePhysics() {
-        this.world.step()
+        this.world.step();
         for (let i = 0; i < this.phsyicsEntities.length; i++) {
             this.phsyicsEntities[i].updatePhysics();
         }

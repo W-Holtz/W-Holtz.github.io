@@ -55,6 +55,8 @@ let canvasStyle = window.getComputedStyle(canvas);
 const ctx = canvas.getContext('2d');
 let widthToHeightRatio=1;
 let isShielded = false;
+const urlParams = new URLSearchParams(window.location.search);
+const fadeFromBlack = ('true' === urlParams.get('fadeFromBlack')); 
 
 
 /* 
@@ -127,6 +129,13 @@ let backgroundHoverOffset = 0;
 let isTransitioning = false;
 let transitioningTo = null;
 let doDraw = true;
+if (fadeFromBlack) {
+    targetScrollPosition = -1.5;
+    currScrollPosition = targetScrollPosition;
+    isTransitioning = true;
+    transitioningTo = 0;
+}
+
 addEventListener("wheel", (event) => {
     if (isTransitioning) { return; } // ignore scrolling if we are doing a click/tab based transistion
     targetScrollPosition += 0.001 * event.deltaY;
@@ -144,13 +153,13 @@ function updateScroll() { // For an efficiency gain, convert this to a polynomia
                 if (currScrollPosition > 0) { // handle moving from 1 to 0
                     currScrollPosition -= 0.02 * Math.sin((currScrollPosition - 0.3) * 2 * Math.PI ) + 0.02;
                 } else  { // handle moving from -2 to 0
-                    if (currScrollPosition < -1) { // -2 to -1
+                    if (currScrollPosition < -.9) { // -2 to -1
                         currScrollPosition += .04
                     } else { // -1 to 0
-                        currScrollPosition += 0.02 * Math.sin((currScrollPosition - 0.2) * 2 * Math.PI ) + 0.02;
+                        currScrollPosition += 0.02 * Math.sin((currScrollPosition - 0.3) * 2 * Math.PI ) + 0.02;
                     }
                 }
-                if ((currScrollPosition < .2)||(currScrollPosition > 0)) {
+                if ((Math.abs(currScrollPosition) < .2) || (currScrollPosition > 0)) {
                     targetScrollPosition = .1;
                     isTransitioning = false;
                     transitioningTo=null;
@@ -161,7 +170,7 @@ function updateScroll() { // For an efficiency gain, convert this to a polynomia
                 if (currScrollPosition > .8) {
                     targetScrollPosition = .9;
                     isTransitioning = false;
-                    transitioningTo=null;
+                    transitioningTo = null;
                 }
                 break;
             case -1: // transition from zero state >> game

@@ -10,8 +10,71 @@
 		<link rel="stylesheet" type="text/css" href="gameStyle.css">
 	</head>
 	<body>
-		
+
+		<div id="curtain">
+			<div class="popup-container">
+				<div class="image-wrapper">
+					<img class="popup-content" src="./assets/underConstructionCurtain.png" />
+				</div>
+				<div class="button-container">
+					<button id="goBackBtn" class="popup-btn">
+						<img src="./assets/goBackButton.png" alt="Go Back">
+					</button>
+
+					<div class="vertical-line"></div>
+
+					<button id="peekAnywayBtn" class="popup-btn">
+						<img src="./assets/peekAnywayButton.png" alt="Peek Anyway">
+					</button>	
+				</div>
+			</div>
+		</div>
+
 		<canvas id="game-surface"></canvas>
 		<script type="module" src="game.js"></script>
+
+		<div class="gauge" id="kmh">
+    		<img class="dial" src="./assets/mphGauge.png" />
+    		<img class="needle" id="kmhNeedle" src="./assets/gaugeNeedle.png" />
+  		</div>
+
+		<div class="gauge" id="rpm">
+			<img class="dial" src="./assets/rpmGauge.png" />
+			<img class="needle" id="rpmNeedle" src="./assets/gaugeNeedle.png" />
+		</div>
+
+		<div id="controls" class="popup-overlay">
+				<img class="popup-content" src="./assets/controls.png" alt="Popup Image">
+		</div>
+
+		<div id="fadeOverlay" class="fade-overlay"></div>
+		
+		<script>
+			const goBackBtn = document.getElementById('goBackBtn');
+			const peekAnywayBtn = document.getElementById('peekAnywayBtn');
+			const curtain = document.getElementById('curtain');
+			const fadeOverlay = document.getElementById('fadeOverlay');
+			const controls = document.getElementById('controls');
+
+			goBackBtn.addEventListener('click', () => {
+				// Fade to black
+				fadeOverlay.classList.add('fade-in');
+				// Redirect
+				setTimeout(() => {
+					window.location.assign("/?fadeFromBlack=true");
+				}, 100);
+			});
+
+			peekAnywayBtn.addEventListener('click', () => {
+				curtain.style.opacity = '0';
+				
+				// Remove curtain from DOM
+				setTimeout(() => {
+					curtain.style.display = 'none';
+					curtain.style.pointerEvents = 'none';
+				}, 2000);
+			});
+		</script>
+		
 	</body>
 </html>
