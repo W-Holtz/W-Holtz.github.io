@@ -1,4 +1,4 @@
-import Stats from '../node_modules/three/examples/jsm/libs/stats.module';
+import Stats from 'three/examples/jsm/libs/stats.module';
 
 class PerformanceLog {
 

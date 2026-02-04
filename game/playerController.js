@@ -1,4 +1,4 @@
-import * as THREE from '../node_modules/three';
+import * as THREE from 'three';
 
 const THROTTLE_INCREASE_RATE = 0.3;
 const THROTTLE_RELEASE_RATE = 0.3;

@@ -1,8 +1,8 @@
-import * as THREE from '../node_modules/three';
-import {GLTFLoader} from '../node_modules/three/addons/loaders/GLTFLoader.js';
-import { OrbitControls } from '../node_modules/three/addons/controls/OrbitControls.js';
-import * as RAPIER from '../node_modules/@dimforge/rapier3d';
-import { GUI } from '../node_modules/three/addons/libs/lil-gui.module.min.js';
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import * as RAPIER from '@dimforge/rapier3d';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
 import {vertexShaderText} from './shaders/vertex.js';
 import {fragmentShaderText} from './shaders/fragment.js';
