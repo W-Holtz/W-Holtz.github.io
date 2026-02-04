@@ -197,7 +197,7 @@ function updateScroll() { // For an efficiency gain, convert this to a polynomia
 }
 
 async function switchToGame() { 
-    window.location.href="game/game.html"
+    window.location.href="/game"
     doDraw = false;
     targetScrollPosition = -.9;
     currScrollPosition = 0;
