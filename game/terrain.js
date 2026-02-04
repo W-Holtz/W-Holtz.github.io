@@ -1,7 +1,7 @@
-import * as THREE from 'three';
+import * as THREE from '../node_modules/three';
 import Entity from './entity.js';
 import * as NOISE from 'noisejs';
-import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {GLTFLoader} from '../node_modules/three/addons/loaders/GLTFLoader.js';
 let r;
 
 const HEIGHT_MAP_PATH = './assets/heightMap.png';

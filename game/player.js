@@ -1,8 +1,8 @@
-import * as THREE from 'three';
+import * as THREE from '../node_modules/three';
 import Entity from './entity.js';
 import SkidParticles from './skidParticles.js';
 import PlayerController from './playerController.js';
-import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {GLTFLoader} from '../node_modules/three/addons/loaders/GLTFLoader.js';
 
 let r;
 const deltaT = 1/60;

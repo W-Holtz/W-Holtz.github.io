@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import * as THREE from '../node_modules/three';
 import {vertexShaderText} from './shaders/hudVertex.js';
 import {fragmentShaderText} from './shaders/hudFragment.js';
  
