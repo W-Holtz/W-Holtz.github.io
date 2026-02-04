@@ -6,16 +6,16 @@ const HUD_HEIGHT = 0.3;
 const HUD_WIDTH = 1;
 
 const GAUGE_PATHS = {
-    RPM: './assets/rpmGauge.png',
-    SPEED: './assets/mphGauge.png',
+    RPM: '../game/assets/rpmGauge.png',
+    SPEED: '../game/assets/mphGauge.png',
 };
 const GAUGE_SIDE = {
     LEFT: 'LEFT',
     RIGHT: 'RIGHT',
 };
-const NEEDLE_PATH = './assets/gaugeNeedle.png';
+const NEEDLE_PATH = '../game/assets/gaugeNeedle.png';
 
-const GEAR_INDICATOR_PATH =  './assets/gearIndicator.png';
+const GEAR_INDICATOR_PATH =  '../game/assets/gearIndicator.png';
 const GEAR_INDICATOR_INDEX = {
     BORDER: 0,
     "-1": 1,
@@ -72,7 +72,7 @@ class HUD {
 
 
         loader.load(
-            './assets/gearIndicator.png',
+            '../game/assets/gearIndicator.png',
             (texture) => {
                 texture.minFilter = THREE.NearestFilter;
                 texture.magFilter = THREE.NearestFilter;
@@ -89,7 +89,7 @@ class HUD {
 
     loadSpeedDial(loader) {
         loader.load(
-            './assets/mphGauge.png',
+            '../game/assets/mphGauge.png',
             (texture) => {
                 texture.minFilter = THREE.NearestFilter;
                 texture.magFilter = THREE.NearestFilter;
@@ -106,7 +106,7 @@ class HUD {
 
     loadRpmDial(loader) {
         loader.load(
-            './assets/rpmGauge.png',
+            '../game/assets/rpmGauge.png',
             (texture) => {
                 texture.minFilter = THREE.NearestFilter;
                 texture.magFilter = THREE.NearestFilter;

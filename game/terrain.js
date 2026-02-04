@@ -4,11 +4,11 @@ import * as NOISE from 'noisejs';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 let r;
 
-const HEIGHT_MAP_PATH = './assets/heightMap.png';
-const NORMAL_MAP_PATH = './assets/normalMap.png';
-const TERRAIN_TEXTURE_PATH = './assets/road.png';
-const DEMO_ROAD_MODEL_PATH = './assets/demoRoad.glb'
-const DEMO_TERRAIN_MODEL_PATH = './assets/demoTerrain.glb';
+const HEIGHT_MAP_PATH = '../game/assets/heightMap.png';
+const NORMAL_MAP_PATH = '../game/assets/normalMap.png';
+const TERRAIN_TEXTURE_PATH = '../game/assets/road.png';
+const DEMO_ROAD_MODEL_PATH = '../game/assets/demoRoad.glb'
+const DEMO_TERRAIN_MODEL_PATH = '../game/assets/demoTerrain.glb';
 
 const OVERALL_SCALE = 1000; // Set at 1000, we are roughly properly scaling up the model of breckenridge so that 1m = 1m
 const DISPLACEMENT_SCALE = .2 * OVERALL_SCALE;

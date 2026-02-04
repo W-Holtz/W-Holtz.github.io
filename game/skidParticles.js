@@ -24,7 +24,7 @@ class TireParticles {
   constructor(parentMesh, camera) {
     const uniforms = {
         diffuseTexture: {
-            value: new THREE.TextureLoader().load('./assets/gravel.png')
+            value: new THREE.TextureLoader().load('../game/assets/gravel.png')
         },
     };
 
