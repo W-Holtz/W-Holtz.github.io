@@ -51,7 +51,7 @@ export default class HardwareAccelerationPopup {
             </p>
             <div style="background: #f5f5f5; border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; font-size: 13px; line-height: 1.6;">
                 <strong>Chrome / Edge:</strong><br>
-                Settings → System → Enable "Use hardware acceleration"<br>
+                Settings → System → Enable "Use graphics acceleration when available"<br>
                 Restart browser<br><br>
                 
                 <strong>Firefox:</strong><br>
