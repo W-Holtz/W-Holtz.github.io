@@ -10,6 +10,7 @@
  * code style and maintainability. Hopefully, my other game code files do not similarly
  * dissapoint.
  */
+import HardwareAccelerationPopup from "./hardwareAccelerationPopup";
 
 // #region - Constants
 const MAX_FRAMES = 1000;
@@ -129,6 +130,8 @@ let backgroundHoverOffset = 0;
 let isTransitioning = false;
 let transitioningTo = null;
 let doDraw = true;
+let isHardwarePopupShowing = false;
+
 if (fadeFromBlack) {
     targetScrollPosition = -1.5;
     currScrollPosition = targetScrollPosition;
@@ -197,13 +200,29 @@ function updateScroll() { // For an efficiency gain, convert this to a polynomia
 }
 
 async function switchToGame() { 
-    window.location.href="/game"
-    doDraw = false;
-    targetScrollPosition = -.9;
-    currScrollPosition = 0;
-    targetScrollPosition = 0;
-    transitioningTo=null;
-    isTransitioning = false;
+    if (isHardwarePopupShowing) {
+        return;
+    }
+    
+    let hardwarePopup = new HardwareAccelerationPopup(() => {
+            transitioningTo = 0;
+            currScrollPosition = -1;
+            targetScrollPosition = 0;
+            isTransitioning = true;
+            isHardwarePopupShowing = false;
+        });
+    isHardwarePopupShowing = true;
+    
+    if (hardwarePopup.checkAndShowHardwareAccelWarning()) {
+        // Popup did not fire
+        window.location.href="/game"
+        doDraw = false;
+        currScrollPosition = 0;
+        targetScrollPosition = 0;
+        transitioningTo=null;
+        isTransitioning = false;
+        isHardwarePopupShowing = false;
+    }
 }
 
 // Mouse Position Setup
